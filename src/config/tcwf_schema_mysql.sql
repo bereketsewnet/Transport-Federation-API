@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS `login_accounts` (
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 1,
   `security_question` TEXT,
   `security_answer_hash` TEXT,
+  `role` VARCHAR(50) NOT NULL DEFAULT 'user',
   `last_login` DATETIME,
   `is_locked` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
