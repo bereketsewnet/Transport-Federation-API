@@ -1,0 +1,30 @@
+// src/app.js
+const express = require('express');
+const app = express();
+require('dotenv').config();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// auth
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// core resources
+app.use('/api/unions', require('./routes/unions.routes'));
+app.use('/api/members', require('./routes/members.routes'));
+app.use('/api/union-executives', require('./routes/unionExecutives.routes'));
+app.use('/api/cbas', require('./routes/cbas.routes'));
+app.use('/api/terminated-unions', require('./routes/terminatedUnions.routes'));
+app.use('/api/login-accounts', require('./routes/loginAccounts.routes'));
+app.use('/api/org-leaders', require('./routes/orgLeaders.routes'));
+app.use('/api/archives', require('./routes/archives.routes'));
+app.use('/api/visitors', require('./routes/visitors.routes'));
+app.use('/api/contacts', require('./routes/contacts.routes'));
+app.use('/api/news', require('./routes/news.routes'));
+app.use('/api/galleries', require('./routes/galleries.routes'));
+app.use('/api/photos', require('./routes/photos.routes'));
+app.use('/api/reports', require('./routes/reports.routes'));
+
+// health
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+module.exports = app;
