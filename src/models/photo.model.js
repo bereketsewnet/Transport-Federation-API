@@ -9,6 +9,7 @@ const Photo = sequelize.define('Photo', {
   filename: { type: DataTypes.STRING(255) },
   caption: { type: DataTypes.TEXT },
   taken_at: { type: DataTypes.DATEONLY },
+  is_local: { type: DataTypes.BOOLEAN, defaultValue: false }, // true for uploaded files, false for URLs
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'photos', timestamps: false });
 

@@ -1,7 +1,10 @@
 // src/controllers/members.controller.js
 const Member = require('../models/member.model');
 const Archive = require('../models/archive.model');
+const LoginAccount = require('../models/loginAccount.model');
+const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
 
 exports.list = async (req, res) => {
   try {
@@ -25,18 +28,67 @@ exports.getById = async (req,res) => {
   try {
     const item = await Member.findByPk(req.params.id);
     if (!item) return res.status(404).json({ message: 'Member not found' });
-    res.json(item);
+    
+    // Also get login account info if exists
+    const loginAccount = await LoginAccount.findOne({ 
+      where: { mem_id: item.mem_id },
+      attributes: { exclude: ['password_hash', 'security_answer_1_hash', 'security_answer_2_hash', 'security_answer_3_hash'] }
+    });
+    
+    const response = item.toJSON();
+    response.loginAccount = loginAccount;
+    
+    res.json(response);
   } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
 };
 
 exports.create = async (req,res) => {
   try {
     if (!req.body.first_name) return res.status(400).json({ message: 'first_name required' });
+    
     // set mem_uuid if not set
-    if (!req.body.mem_uuid) req.body.mem_uuid = require('uuid').v4();
+    if (!req.body.mem_uuid) req.body.mem_uuid = uuidv4();
+    
+    // Create member
     const created = await Member.create(req.body);
-    res.status(201).json(created);
-  } catch (err) { console.error(err); res.status(400).json({ message: err.message }); }
+    
+    // Automatically create login account for the member
+    // Generate username from member_code or email
+    let username = req.body.member_code;
+    if (!username && req.body.email) {
+      username = req.body.email.split('@')[0];
+    }
+    if (!username) {
+      username = `member_${created.mem_id}`;
+    }
+    
+    // Generate default password (member code or phone last 6 digits)
+    let defaultPassword = req.body.member_code || req.body.phone?.slice(-6) || '123456';
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
+    
+    // Create login account
+    const loginAccount = await LoginAccount.create({
+      mem_id: created.mem_id,
+      username: username,
+      password_hash: passwordHash,
+      role: 'member',
+      must_change_password: true, // Force password change on first login
+      password_reset_required: false
+    });
+    
+    // Return member with login credentials
+    const response = created.toJSON();
+    response.loginCredentials = {
+      username: loginAccount.username,
+      defaultPassword: defaultPassword,
+      message: 'Login account created. User must change password and set security questions on first login.'
+    };
+    
+    res.status(201).json(response);
+  } catch (err) { 
+    console.error(err); 
+    res.status(400).json({ message: err.message }); 
+  }
 };
 
 exports.update = async (req,res) => {

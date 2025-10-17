@@ -324,37 +324,48 @@ async function main() {
       console.log('Creating login accounts for admin, test users, and subset of members...');
       const loginsToInsert = [];
 
-      // Admin login
+      // Security question answers (for testing forgot password)
+      const answer1Hash = await bcrypt.hash('addis ababa', 12);
+      const answer2Hash = await bcrypt.hash('smith', 12);
+      const answer3Hash = await bcrypt.hash('fluffy', 12);
+
+      // Admin login (ready to use - no password change required for admin)
       loginsToInsert.push({
         mem_id: adminMember.mem_id,
         username: ADMIN_USERNAME,
         password_hash: adminPasswordHash,
-        must_change_password: 1,
+        must_change_password: 0, // Admin does NOT need to change password
         role: 'admin',
+        security_question_1_id: 4,
+        security_answer_1_hash: answer1Hash,
+        security_question_2_id: 2,
+        security_answer_2_hash: answer2Hash,
+        security_question_3_id: 3,
+        security_answer_3_hash: answer3Hash,
         created_at: new Date(),
       });
 
-      // Test user 1 login
+      // Test user 1 login (MUST change password on first login)
       loginsToInsert.push({
         mem_id: testUser1Member.mem_id,
         username: TEST_USER1_USERNAME,
         password_hash: testUser1PasswordHash,
-        must_change_password: 0,
+        must_change_password: 1, // Member MUST change password on first login
         role: 'member',
         created_at: new Date(),
       });
 
-      // Test user 2 login
+      // Test user 2 login (MUST change password on first login)
       loginsToInsert.push({
         mem_id: testUser2Member.mem_id,
         username: TEST_USER2_USERNAME,
         password_hash: testUser2PasswordHash,
-        must_change_password: 0,
+        must_change_password: 1, // Member MUST change password on first login
         role: 'member',
         created_at: new Date(),
       });
 
-      // Additional random member logins
+      // Additional random member logins (all members must change password on first login)
       const additionalLoginCount = Math.floor(createdMembers.length * LOGIN_ACCOUNT_PCT);
       for (let i = 0; i < additionalLoginCount; i++) {
         const m = createdMembers[Math.floor(Math.random() * createdMembers.length)];
@@ -364,7 +375,7 @@ async function main() {
           mem_id: m.mem_id || m.id,
           username: uname.slice(0, 100),
           password_hash: defaultPasswordHash,
-          must_change_password: 0,
+          must_change_password: 1, // All members must change password on first login
           role: 'member',
           created_at: new Date(),
         });
@@ -376,8 +387,8 @@ async function main() {
         for (const l of loginsToInsert) {
           try {
             await sequelize.query(
-              `INSERT IGNORE INTO login_accounts (mem_id, username, password_hash, must_change_password, role, created_at) VALUES (?,?,?,?,?,?)`,
-              { replacements: [l.mem_id, l.username, l.password_hash, l.must_change_password, l.role, l.created_at], transaction: t }
+              `INSERT IGNORE INTO login_accounts (mem_id, username, password_hash, must_change_password, role, security_question_1_id, security_answer_1_hash, security_question_2_id, security_answer_2_hash, security_question_3_id, security_answer_3_hash, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+              { replacements: [l.mem_id, l.username, l.password_hash, l.must_change_password, l.role, l.security_question_1_id, l.security_answer_1_hash, l.security_question_2_id, l.security_answer_2_hash, l.security_question_3_id, l.security_answer_3_hash, l.created_at], transaction: t }
             );
           } catch (e) { /* ignore */ }
         }
@@ -742,18 +753,33 @@ CREATE TABLE IF NOT EXISTS \`reports_cache\` (
       console.log(`  Password: ${ADMIN_PASSWORD}`);
       console.log(`  Email: ${ADMIN_EMAIL}`);
       console.log(`  Role: admin`);
+      console.log(`  Status: ✅ Ready to login immediately (no password change required)`);
       
-      console.log('\nTest User 1:');
+      console.log('\nTest Member 1:');
       console.log(`  Username: ${TEST_USER1_USERNAME}`);
       console.log(`  Password: ${TEST_USER1_PASSWORD}`);
       console.log(`  Email: ${TEST_USER1_EMAIL}`);
       console.log(`  Role: member`);
+      console.log(`  Status: ⚠️  MUST change password on first login`);
       
-      console.log('\nTest User 2:');
+      console.log('\nTest Member 2:');
       console.log(`  Username: ${TEST_USER2_USERNAME}`);
       console.log(`  Password: ${TEST_USER2_PASSWORD}`);
       console.log(`  Email: ${TEST_USER2_EMAIL}`);
       console.log(`  Role: member`);
+      console.log(`  Status: ⚠️  MUST change password on first login`);
+      
+      console.log('\n=== FIRST LOGIN FLOW FOR MEMBERS ===');
+      console.log('1. Member logs in with default credentials');
+      console.log('2. Receives tempToken (valid 30 minutes)');
+      console.log('3. Must change password AND set 3 security questions');
+      console.log('4. Receives full access token');
+      
+      console.log('\n=== SECURITY QUESTIONS (Pre-set for Admin) ===');
+      console.log('Admin account has these security questions for password reset:');
+      console.log('  Question 1 (ID 4): "In what city were you born?" → Answer: "addis ababa"');
+      console.log('  Question 2 (ID 2): "What is your mother\'s maiden name?" → Answer: "smith"');
+      console.log('  Question 3 (ID 3): "What was the name of your first pet?" → Answer: "fluffy"');
       
       console.log('\n=== SUMMARY ===');
       console.log(`Created ${createdUnions.length} unions`);

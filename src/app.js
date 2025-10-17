@@ -1,6 +1,7 @@
 // src/app.js
 const express = require('express');
 const app = express();
+const path = require('path');
 require('dotenv').config();
 const cors = require('cors');
 app.use(express.json());
@@ -11,6 +12,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
+// Serve uploaded photos statically
+app.use('/uploads/photos', express.static(path.join(__dirname, '../uploads/photos')));
 
 // auth
 app.use('/api/auth', require('./routes/auth.routes'));

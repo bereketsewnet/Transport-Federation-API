@@ -52,10 +52,17 @@ exports.resetPassword = async (req,res) => {
     if (!found) return res.status(404).json({ message: 'Not found' });
     const newPass = req.body.password;
     if (!newPass) return res.status(400).json({ message: 'password required' });
+    if (newPass.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    
     found.password_hash = await bcrypt.hash(newPass, 12);
     found.must_change_password = true;
+    found.password_reset_required = true; // Flag for admin reset
     await found.save();
-    res.json({ message: 'Password reset' });
+    
+    res.json({ 
+      message: 'Password reset successfully. User will be required to change password and set security questions on next login.',
+      username: found.username
+    });
   } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
 };
 
