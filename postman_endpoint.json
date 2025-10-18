@@ -883,7 +883,7 @@
             "response": []
           },
           {
-            "name": "Create news (admin)",
+            "name": "Create news with JSON (no image)",
             "request": {
               "method":"POST",
               "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
@@ -894,12 +894,82 @@
             "response": []
           },
           {
-            "name": "Update news (admin)",
+            "name": "Create news with image URL",
+            "request": {
+              "method":"POST",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "header":[{"key":"Content-Type","value":"application/json"}],
+              "body":{"mode":"raw","raw":"{\n  \"title\": \"Federation Annual Report\",\n  \"body\": \"Detailed report content...\",\n  \"summary\": \"Annual summary\",\n  \"published_at\": \"2025-10-02T08:00:00Z\",\n  \"is_published\": true,\n  \"image_url\": \"https://example.com/images/report.jpg\"\n}"},
+              "url":{"raw":"{{base_url}}/api/news","host":["{{base_url}}"],"path":["api","news"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Create news with image file upload",
+            "request": {
+              "method":"POST",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "body":{
+                "mode":"formdata",
+                "formdata":[
+                  {"key":"image","type":"file","src":"path/to/your/image.jpg"},
+                  {"key":"title","value":"Federation Annual Report","type":"text"},
+                  {"key":"body","value":"Detailed report content...","type":"text"},
+                  {"key":"summary","value":"Annual summary","type":"text"},
+                  {"key":"published_at","value":"2025-10-02T08:00:00Z","type":"text"},
+                  {"key":"is_published","value":"true","type":"text"}
+                ]
+              },
+              "url":{"raw":"{{base_url}}/api/news","host":["{{base_url}}"],"path":["api","news"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update news (JSON)",
             "request": {
               "method":"PUT",
               "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "header":[{"key":"Content-Type","value":"application/json"}],
               "body":{"mode":"raw","raw":"{\n  \"title\": \"Updated Federation Report\",\n  \"is_published\": false\n}"},
+              "url":{"raw":"{{base_url}}/api/news/1","host":["{{base_url}}"],"path":["api","news","1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update news with new image URL",
+            "request": {
+              "method":"PUT",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "header":[{"key":"Content-Type","value":"application/json"}],
+              "body":{"mode":"raw","raw":"{\n  \"title\": \"Updated Federation Report\",\n  \"is_published\": false,\n  \"image_url\": \"https://example.com/images/new-report.jpg\"\n}"},
+              "url":{"raw":"{{base_url}}/api/news/1","host":["{{base_url}}"],"path":["api","news","1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update news with new image file",
+            "request": {
+              "method":"PUT",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "body":{
+                "mode":"formdata",
+                "formdata":[
+                  {"key":"image","type":"file","src":"path/to/new-image.jpg"},
+                  {"key":"title","value":"Updated Federation Report","type":"text"},
+                  {"key":"is_published","value":"false","type":"text"}
+                ]
+              },
+              "url":{"raw":"{{base_url}}/api/news/1","host":["{{base_url}}"],"path":["api","news","1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update news - remove image",
+            "request": {
+              "method":"PUT",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "header":[{"key":"Content-Type","value":"application/json"}],
+              "body":{"mode":"raw","raw":"{\n  \"title\": \"Updated Federation Report\",\n  \"remove_image\": true\n}"},
               "url":{"raw":"{{base_url}}/api/news/1","host":["{{base_url}}"],"path":["api","news","1"]}
             },
             "response": []

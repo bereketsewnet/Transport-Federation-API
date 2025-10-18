@@ -3,23 +3,39 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads/photos');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Ensure uploads directories exist
+const photosDir = path.join(__dirname, '../../uploads/photos');
+const newsDir = path.join(__dirname, '../../uploads/news');
+if (!fs.existsSync(photosDir)) {
+  fs.mkdirSync(photosDir, { recursive: true });
+}
+if (!fs.existsSync(newsDir)) {
+  fs.mkdirSync(newsDir, { recursive: true });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
+// Configure storage for photos
+const photoStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadsDir);
+    cb(null, photosDir);
   },
   filename: function (req, file, cb) {
     // Generate unique filename: timestamp-randomstring-originalname
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    const nameWithoutExt = path.basename(file.originalname, ext);
     cb(null, `photo-${uniqueSuffix}${ext}`);
+  }
+});
+
+// Configure storage for news images
+const newsStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, newsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename: timestamp-randomstring-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `news-${uniqueSuffix}${ext}`);
   }
 });
 
@@ -36,18 +52,27 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer
-const upload = multer({
-  storage: storage,
+// Configure multer for photos
+const uploadPhoto = multer({
+  storage: photoStorage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB max file size
   },
   fileFilter: fileFilter
 });
 
-// Middleware to handle optional file upload (supports both file and URL)
+// Configure multer for news images
+const uploadNews = multer({
+  storage: newsStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB max file size
+  },
+  fileFilter: fileFilter
+});
+
+// Middleware to handle optional photo upload (supports both file and URL)
 const optionalPhotoUpload = (req, res, next) => {
-  const uploadSingle = upload.single('photo');
+  const uploadSingle = uploadPhoto.single('photo');
   
   uploadSingle(req, res, function(err) {
     if (err instanceof multer.MulterError) {
@@ -71,8 +96,31 @@ const optionalPhotoUpload = (req, res, next) => {
   });
 };
 
+// Middleware to handle optional news image upload (supports both file and URL)
+const uploadNewsImage = (req, res, next) => {
+  const uploadSingle = uploadNews.single('image');
+  
+  uploadSingle(req, res, function(err) {
+    if (err instanceof multer.MulterError) {
+      // Multer error occurred
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File size too large. Maximum 5MB allowed.' });
+      }
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      // Unknown error occurred
+      return res.status(400).json({ message: err.message });
+    }
+    
+    // Image is optional for news, so just continue
+    next();
+  });
+};
+
 module.exports = {
-  upload,
-  optionalPhotoUpload
+  uploadPhoto,
+  uploadNews,
+  optionalPhotoUpload,
+  uploadNewsImage
 };
 
