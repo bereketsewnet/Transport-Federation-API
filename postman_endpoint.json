@@ -865,19 +865,17 @@
         "name": "News",
         "item": [
           {
-            "name": "List news",
+            "name": "List news (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/news?is_published=true&page=1&per_page=20","host":["{{base_url}}"],"path":["api","news"],"query":[{"key":"is_published","value":"true"},{"key":"page","value":"1"},{"key":"per_page","value":"20"}]}
             },
             "response": []
           },
           {
-            "name": "Get news by id",
+            "name": "Get news by id (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/news/1","host":["{{base_url}}"],"path":["api","news","1"]}
             },
             "response": []
@@ -989,19 +987,17 @@
         "name": "Galleries & Photos",
         "item": [
           {
-            "name": "List galleries",
+            "name": "List galleries (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/galleries?page=1&per_page=20","host":["{{base_url}}"],"path":["api","galleries"],"query":[{"key":"page","value":"1"},{"key":"per_page","value":"20"}]}
             },
             "response": []
           },
           {
-            "name": "Get gallery by id (with photos)",
+            "name": "Get gallery by id (with photos) (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/galleries/1","host":["{{base_url}}"],"path":["api","galleries","1"]}
             },
             "response": []
@@ -1038,19 +1034,17 @@
             "response": []
           },
           {
-            "name": "List photos",
+            "name": "List photos (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/photos?gallery_id=1&page=1&per_page=20","host":["{{base_url}}"],"path":["api","photos"],"query":[{"key":"gallery_id","value":"1"},{"key":"page","value":"1"},{"key":"per_page","value":"20"}]}
             },
             "response": []
           },
           {
-            "name": "Get photo by id",
+            "name": "Get photo by id (public)",
             "request": {
               "method":"GET",
-              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
               "url":{"raw":"{{base_url}}/api/photos/1","host":["{{base_url}}"],"path":["api","photos","1"]}
             },
             "response": []
