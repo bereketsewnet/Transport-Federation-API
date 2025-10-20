@@ -16,6 +16,7 @@ app.use(cors({
 // Serve uploaded files statically
 app.use('/uploads/photos', express.static(path.join(__dirname, '../uploads/photos')));
 app.use('/uploads/news', express.static(path.join(__dirname, '../uploads/news')));
+app.use('/uploads/cms', express.static(path.join(__dirname, '../uploads/cms')));
 
 // auth
 app.use('/api/auth', require('./routes/auth.routes'));
@@ -35,6 +36,9 @@ app.use('/api/news', require('./routes/news.routes'));
 app.use('/api/galleries', require('./routes/galleries.routes'));
 app.use('/api/photos', require('./routes/photos.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
+
+// CMS routes
+app.use('/api/cms', require('./routes/cms.routes'));
 
 // health
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
