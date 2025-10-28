@@ -90,8 +90,8 @@ exports.getHomeContent = async (req, res) => {
 
 exports.updateHomeContent = async (req, res) => {
   try {
-    const updateData = toSnakeCase(req.body);
-    updateData.updated_by = req.user.id;
+    const updateData = { ...req.body };
+    updateData.updatedBy = req.user.id;
     
     let homeContent = await HomeContent.findOne();
     
@@ -99,9 +99,11 @@ exports.updateHomeContent = async (req, res) => {
       // Create new if doesn't exist
       homeContent = await HomeContent.create(updateData);
     } else {
-      // Update existing
       await homeContent.update(updateData);
     }
+    
+    // Reload from database to get fresh data
+    await homeContent.reload();
     
     const response = toCamelCase(homeContent.toJSON());
     
