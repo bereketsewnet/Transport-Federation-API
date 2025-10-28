@@ -795,6 +795,61 @@
         ]
       },
       {
+        "name": "Documents",
+        "description": "Document management (files, reports, PDFs)",
+        "item": [
+          {
+            "name": "List documents",
+            "request": {
+              "method": "GET",
+              "auth": { "type": "bearer", "bearer": [{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url": {"raw": "{{base_url}}/api/documents?q=report&category=Reports&page=1&per_page=20", "host":["{{base_url}}"], "path":["api","documents"], "query":[{"key":"q","value":"report"},{"key":"category","value":"Reports"},{"key":"page","value":"1"},{"key":"per_page","value":"20"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "Get document by id",
+            "request": {
+              "method": "GET",
+              "auth": { "type": "bearer", "bearer": [{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url": {"raw": "{{base_url}}/api/documents/1", "host":["{{base_url}}"], "path":["api","documents","1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Create document (admin)",
+            "request": {
+              "method": "POST",
+              "auth": { "type": "bearer", "bearer": [{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "header": [{"key":"Content-Type","value":"application/json"}],
+              "body": {"mode":"raw","raw":"{\n  \"title\": \"Annual Report 2024\",\n  \"category\": \"Reports\",\n  \"document_type\": \"PDF\",\n  \"file_url\": \"/uploads/documents/annual-report-2024.pdf\",\n  \"file_name\": \"annual-report-2024.pdf\",\n  \"file_size\": 1024000,\n  \"tags\": [\"annual\", \"report\", \"2024\"],\n  \"description\": \"Complete annual report for 2024\",\n  \"is_public\": true\n}"},
+              "url": {"raw": "{{base_url}}/api/documents", "host":["{{base_url}}"], "path":["api","documents"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update document (admin)",
+            "request": {
+              "method": "PUT",
+              "auth": { "type": "bearer", "bearer": [{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "header": [{"key":"Content-Type","value":"application/json"}],
+              "body": {"mode":"raw","raw":"{\n  \"title\": \"Annual Report 2024 (Updated)\",\n  \"is_public\": false\n}"},
+              "url": {"raw": "{{base_url}}/api/documents/1", "host":["{{base_url}}"], "path":["api","documents","1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Delete document (admin)",
+            "request": {
+              "method": "DELETE",
+              "auth": { "type": "bearer", "bearer": [{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url": {"raw": "{{base_url}}/api/documents/1?confirm=true", "host":["{{base_url}}"], "path":["api","documents","1"], "query":[{"key":"confirm","value":"true"}]}
+            },
+            "response": []
+          }
+        ]
+      },
+      {
         "name": "Visitors",
         "item": [
           {

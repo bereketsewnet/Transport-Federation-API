@@ -40,7 +40,7 @@ async function resetDatabase() {
       'contacts', 'visitors', 'archives', 'organization_leaders',
       'login_accounts', 'terminated_unions', 'cbas', 'union_executives',
       'members', 'unions', 'executives', 'contact_info',
-      'about_content', 'home_content'
+      'about_content', 'home_content', 'documents'
     ];
 
     for (const table of tables) {
@@ -88,6 +88,8 @@ async function resetDatabase() {
     await sequelize.query(`CREATE TABLE executives (id INT AUTO_INCREMENT PRIMARY KEY, name_en VARCHAR(255) NOT NULL, name_am VARCHAR(255), position_en VARCHAR(255), position_am VARCHAR(255), bio_en TEXT, bio_am TEXT, image VARCHAR(500), type ENUM('executive', 'expert') DEFAULT 'executive', display_order INT DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, created_by INT)`);
     
     await sequelize.query(`CREATE TABLE contact_info (id INT AUTO_INCREMENT PRIMARY KEY, address_en TEXT, address_am TEXT, phone VARCHAR(50), phone2 VARCHAR(50), email VARCHAR(255), fax VARCHAR(50), po_box VARCHAR(50), map_url TEXT, latitude DECIMAL(10,8), longitude DECIMAL(11,8), facebook_url VARCHAR(500), twitter_url VARCHAR(500), linkedin_url VARCHAR(500), telegram_url VARCHAR(500), youtube_url VARCHAR(500), working_hours_en TEXT, working_hours_am TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, updated_by INT)`);
+    
+    await sequelize.query(`CREATE TABLE documents (id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255) NOT NULL, category VARCHAR(100) NOT NULL, document_type VARCHAR(50) NOT NULL, file_url VARCHAR(500) NOT NULL, file_name VARCHAR(255), file_size INT, tags JSON, description TEXT, is_public TINYINT(1) DEFAULT 0, created_by INT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
     
     // OSH table
     await sequelize.query(`CREATE TABLE osh_incidents (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT NOT NULL, accident_category VARCHAR(255) NOT NULL, date_time_occurred DATETIME NOT NULL, location_site VARCHAR(255), location_building VARCHAR(255), location_area VARCHAR(255), location_gps_latitude DECIMAL(10,8), location_gps_longitude DECIMAL(11,8), injury_severity VARCHAR(255) DEFAULT 'None', damage_severity VARCHAR(255) DEFAULT 'None', root_cause_unsafe_act BOOLEAN DEFAULT FALSE, root_cause_equipment_failure BOOLEAN DEFAULT FALSE, root_cause_environmental BOOLEAN DEFAULT FALSE, root_cause_other TEXT, description TEXT NOT NULL, regulatory_report_required BOOLEAN DEFAULT FALSE, regulatory_report_date DATE, status ENUM('open', 'investigating', 'action_pending', 'closed') DEFAULT 'open', reported_by VARCHAR(255), reported_date DATETIME DEFAULT CURRENT_TIMESTAMP, investigation_notes TEXT, corrective_actions TEXT, preventive_measures TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, created_by INT, updated_by INT, FOREIGN KEY (union_id) REFERENCES unions(union_id), FOREIGN KEY (created_by) REFERENCES login_accounts(id), FOREIGN KEY (updated_by) REFERENCES login_accounts(id))`);
