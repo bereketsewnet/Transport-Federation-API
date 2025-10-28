@@ -37,6 +37,9 @@ app.use('/api/galleries', require('./routes/galleries.routes'));
 app.use('/api/photos', require('./routes/photos.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 
+// OSH routes
+app.use('/api/osh-incidents', require('./routes/oshIncidents.routes'));
+
 // CMS routes
 app.use('/api/cms', require('./routes/cms.routes'));
 

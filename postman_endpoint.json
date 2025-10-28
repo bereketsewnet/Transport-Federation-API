@@ -1283,6 +1283,122 @@
             "response": []
           }
         ]
+      },
+      {
+        "name": "OSH Incidents",
+        "item": [
+          {
+            "name": "List OSH incidents (public)",
+            "request": {
+              "method": "GET",
+              "url": {"raw": "{{base_url}}/api/osh-incidents?union_id=1&accident_category=People&injury_severity=Major&status=open&from_date=2024-01-01&to_date=2024-12-31&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api", "osh-incidents"], "query": [{"key": "union_id", "value": "1"}, {"key": "accident_category", "value": "People"}, {"key": "injury_severity", "value": "Major"}, {"key": "status", "value": "open"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}, {"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "Get OSH incident by ID (public)",
+            "request": {
+              "method": "GET",
+              "url": {"raw": "{{base_url}}/api/osh-incidents/1", "host": ["{{base_url}}"], "path": ["api", "osh-incidents", "1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Create OSH incident (admin)",
+            "request": {
+              "method": "POST",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"union_id\": 1,\n  \"accident_category\": \"People\",\n  \"date_time_occurred\": \"2024-10-18T10:30:00Z\",\n  \"location_site\": \"Main Office Building\",\n  \"location_building\": \"Building A\",\n  \"location_area\": \"Ground Floor\",\n  \"location_gps_latitude\": 9.0320,\n  \"location_gps_longitude\": 38.7469,\n  \"injury_severity\": \"Minor\",\n  \"damage_severity\": \"None\",\n  \"root_causes\": [\"Unsafe Act\", \"Equipment Failure\"],\n  \"description\": \"Employee slipped on wet floor in the cafeteria\",\n  \"regulatory_report_required\": false,\n  \"status\": \"open\",\n  \"reported_by\": \"Safety Officer\",\n  \"investigation_notes\": \"Initial investigation completed\",\n  \"corrective_actions\": \"Install non-slip mats\",\n  \"preventive_measures\": \"Regular floor cleaning schedule\"\n}"
+              },
+              "url": {"raw": "{{base_url}}/api/osh-incidents", "host": ["{{base_url}}"], "path": ["api", "osh-incidents"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Update OSH incident (admin)",
+            "request": {
+              "method": "PUT",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"investigating\",\n  \"investigation_notes\": \"Updated investigation notes\",\n  \"corrective_actions\": \"Updated corrective actions\",\n  \"preventive_measures\": \"Updated preventive measures\"\n}"
+              },
+              "url": {"raw": "{{base_url}}/api/osh-incidents/1", "host": ["{{base_url}}"], "path": ["api", "osh-incidents", "1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Delete OSH incident (admin)",
+            "request": {
+              "method": "DELETE",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/osh-incidents/1", "host": ["{{base_url}}"], "path": ["api", "osh-incidents", "1"]}
+            },
+            "response": []
+          },
+          {
+            "name": "Get OSH statistics (public)",
+            "request": {
+              "method": "GET",
+              "url": {"raw": "{{base_url}}/api/osh-incidents/statistics?union_id=1&from_date=2024-01-01&to_date=2024-12-31", "host": ["{{base_url}}"], "path": ["api", "osh-incidents", "statistics"], "query": [{"key": "union_id", "value": "1"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}]}
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "OSH Reports",
+        "item": [
+          {
+            "name": "OSH Summary Report (admin)",
+            "request": {
+              "method": "GET",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/reports/osh-summary?union_id=1&from_date=2024-01-01&to_date=2024-12-31", "host": ["{{base_url}}"], "path": ["api", "reports", "osh-summary"], "query": [{"key": "union_id", "value": "1"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "OSH High Severity Report (admin)",
+            "request": {
+              "method": "GET",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/reports/osh-high-severity?union_id=1&from_date=2024-01-01&to_date=2024-12-31", "host": ["{{base_url}}"], "path": ["api", "reports", "osh-high-severity"], "query": [{"key": "union_id", "value": "1"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "OSH Regulatory Reports (admin)",
+            "request": {
+              "method": "GET",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/reports/osh-regulatory-reports?union_id=1&from_date=2024-01-01&to_date=2024-12-31", "host": ["{{base_url}}"], "path": ["api", "reports", "osh-regulatory-reports"], "query": [{"key": "union_id", "value": "1"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "OSH Monthly Trends (admin)",
+            "request": {
+              "method": "GET",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/reports/osh-monthly-trends?union_id=1&months=12", "host": ["{{base_url}}"], "path": ["api", "reports", "osh-monthly-trends"], "query": [{"key": "union_id", "value": "1"}, {"key": "months", "value": "12"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "OSH Root Causes Analysis (admin)",
+            "request": {
+              "method": "GET",
+              "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]},
+              "url": {"raw": "{{base_url}}/api/reports/osh-root-causes?union_id=1&from_date=2024-01-01&to_date=2024-12-31", "host": ["{{base_url}}"], "path": ["api", "reports", "osh-root-causes"], "query": [{"key": "union_id", "value": "1"}, {"key": "from_date", "value": "2024-01-01"}, {"key": "to_date", "value": "2024-12-31"}]}
+            },
+            "response": []
+          }
+        ]
       }
     ],
     "variable": [

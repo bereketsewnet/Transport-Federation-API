@@ -71,6 +71,11 @@ exports.getHomeContent = async (req, res) => {
     
     const response = toCamelCase(homeContent.toJSON());
     
+    // Remove member count statistics (stat1) as requested
+    delete response.stat1LabelEn;
+    delete response.stat1LabelAm;
+    delete response.stat1Value;
+    
     // Add full image URL if hero image exists
     if (response.heroImage) {
       response.heroImageUrl = `/uploads/cms/hero/${response.heroImage}`;

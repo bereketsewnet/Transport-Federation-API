@@ -7,6 +7,7 @@ const CBA = require('../models/cba.model');
 const UnionExecutive = require('../models/unionExecutive.model');
 const TerminatedUnion = require('../models/terminatedUnion.model');
 const ReportCache = require('../models/reportCache.model');
+const OSHIncident = require('../models/oshIncident.model');
 
 /**
  * COMPREHENSIVE REPORTS CONTROLLER
@@ -792,6 +793,347 @@ exports.removeCache = async (req, res) => {
     res.json({ message: 'Deleted' });
   } catch (err) {
     console.error('Remove cache error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ==============================================
+// OSH (OCCUPATIONAL SAFETY AND HEALTH) REPORTS
+// ==============================================
+
+/**
+ * OSH Report 1: OSH Incidents Summary by Category and Severity
+ * GET /api/reports/osh-summary
+ */
+exports.oshSummary = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    const where = {};
+    if (union_id) where.unionId = union_id;
+    
+    if (from_date || to_date) {
+      where.dateTimeOccurred = {};
+      if (from_date) where.dateTimeOccurred[Op.gte] = new Date(from_date);
+      if (to_date) where.dateTimeOccurred[Op.lte] = new Date(to_date);
+    }
+
+    // Total incidents
+    const total = await OSHIncident.count({ where });
+
+    // By accident category
+    const byCategory = await sequelize.query(
+      `SELECT 
+        accident_category, 
+        COUNT(*) as count 
+      FROM osh_incidents 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_time_occurred BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY accident_category 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    // By injury severity
+    const byInjurySeverity = await sequelize.query(
+      `SELECT 
+        injury_severity, 
+        COUNT(*) as count 
+      FROM osh_incidents 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_time_occurred BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY injury_severity 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    // By damage severity
+    const byDamageSeverity = await sequelize.query(
+      `SELECT 
+        damage_severity, 
+        COUNT(*) as count 
+      FROM osh_incidents 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_time_occurred BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY damage_severity 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    // By status
+    const byStatus = await sequelize.query(
+      `SELECT 
+        status, 
+        COUNT(*) as count 
+      FROM osh_incidents 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_time_occurred BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY status 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    res.json({
+      total_incidents: total,
+      by_category: byCategory.map(item => ({
+        category: item.accident_category,
+        count: parseInt(item.count)
+      })),
+      by_injury_severity: byInjurySeverity.map(item => ({
+        severity: item.injury_severity,
+        count: parseInt(item.count)
+      })),
+      by_damage_severity: byDamageSeverity.map(item => ({
+        severity: item.damage_severity,
+        count: parseInt(item.count)
+      })),
+      by_status: byStatus.map(item => ({
+        status: item.status,
+        count: parseInt(item.count)
+      }))
+    });
+  } catch (err) {
+    console.error('OSH summary error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * OSH Report 2: High Severity Incidents (Major/Fatal injuries or Severe/Critical damage)
+ * GET /api/reports/osh-high-severity
+ */
+exports.oshHighSeverity = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    const where = {
+      [Op.or]: [
+        { injurySeverity: { [Op.in]: ['Major', 'Fatal', 'Permanent Disability/Major Injury', 'Fatality'] } },
+        { damageSeverity: { [Op.in]: ['Major', 'Severe/Critical'] } }
+      ]
+    };
+    
+    if (union_id) where.unionId = union_id;
+    
+    if (from_date || to_date) {
+      where.dateTimeOccurred = {};
+      if (from_date) where.dateTimeOccurred[Op.gte] = new Date(from_date);
+      if (to_date) where.dateTimeOccurred[Op.lte] = new Date(to_date);
+    }
+
+    const incidents = await OSHIncident.findAll({
+      where,
+      include: [{
+        model: Union,
+        as: 'union',
+        attributes: ['id', 'name_en', 'name_am', 'union_code']
+      }],
+      order: [['dateTimeOccurred', 'DESC']]
+    });
+
+    res.json({
+      count: incidents.length,
+      data: incidents.map(incident => {
+        const incidentData = incident.toJSON();
+        incidentData.rootCauses = [];
+        if (incidentData.rootCauseUnsafeAct) incidentData.rootCauses.push('Unsafe Act');
+        if (incidentData.rootCauseEquipmentFailure) incidentData.rootCauses.push('Equipment Failure');
+        if (incidentData.rootCauseEnvironmental) incidentData.rootCauses.push('Environmental');
+        if (incidentData.rootCauseOther) incidentData.rootCauses.push(incidentData.rootCauseOther);
+        return incidentData;
+      })
+    });
+  } catch (err) {
+    console.error('OSH high severity error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * OSH Report 3: Incidents Requiring Regulatory Reports
+ * GET /api/reports/osh-regulatory-reports
+ */
+exports.oshRegulatoryReports = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    const where = { regulatoryReportRequired: true };
+    
+    if (union_id) where.unionId = union_id;
+    
+    if (from_date || to_date) {
+      where.dateTimeOccurred = {};
+      if (from_date) where.dateTimeOccurred[Op.gte] = new Date(from_date);
+      if (to_date) where.dateTimeOccurred[Op.lte] = new Date(to_date);
+    }
+
+    const incidents = await OSHIncident.findAll({
+      where,
+      include: [{
+        model: Union,
+        as: 'union',
+        attributes: ['id', 'name_en', 'name_am', 'union_code']
+      }],
+      order: [['regulatoryReportDate', 'DESC']]
+    });
+
+    res.json({
+      count: incidents.length,
+      data: incidents.map(incident => {
+        const incidentData = incident.toJSON();
+        incidentData.rootCauses = [];
+        if (incidentData.rootCauseUnsafeAct) incidentData.rootCauses.push('Unsafe Act');
+        if (incidentData.rootCauseEquipmentFailure) incidentData.rootCauses.push('Equipment Failure');
+        if (incidentData.rootCauseEnvironmental) incidentData.rootCauses.push('Environmental');
+        if (incidentData.rootCauseOther) incidentData.rootCauses.push(incidentData.rootCauseOther);
+        return incidentData;
+      })
+    });
+  } catch (err) {
+    console.error('OSH regulatory reports error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * OSH Report 4: Monthly Incident Trends
+ * GET /api/reports/osh-monthly-trends
+ */
+exports.oshMonthlyTrends = async (req, res) => {
+  try {
+    const { union_id, months = 12 } = req.query;
+    
+    const where = {};
+    if (union_id) where.unionId = union_id;
+    
+    // Last N months
+    where.dateTimeOccurred = {
+      [Op.gte]: new Date(new Date().setMonth(new Date().getMonth() - parseInt(months)))
+    };
+
+    const trends = await sequelize.query(
+      `SELECT 
+        DATE_FORMAT(date_time_occurred, '%Y-%m') as month,
+        accident_category,
+        COUNT(*) as count
+      FROM osh_incidents 
+      WHERE date_time_occurred >= DATE_SUB(CURDATE(), INTERVAL :months MONTH)
+      ${union_id ? 'AND union_id = :unionId' : ''}
+      GROUP BY DATE_FORMAT(date_time_occurred, '%Y-%m'), accident_category
+      ORDER BY month ASC, accident_category ASC`,
+      { 
+        replacements: { 
+          months: parseInt(months),
+          unionId: union_id
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    // Format for easier graphing
+    const monthlyData = {};
+    trends.forEach(item => {
+      if (!monthlyData[item.month]) {
+        monthlyData[item.month] = { month: item.month, People: 0, 'Property/Asset': 0, total: 0 };
+      }
+      monthlyData[item.month][item.accident_category] = parseInt(item.count);
+      monthlyData[item.month].total += parseInt(item.count);
+    });
+
+    res.json({
+      period_months: parseInt(months),
+      data: Object.values(monthlyData)
+    });
+  } catch (err) {
+    console.error('OSH monthly trends error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * OSH Report 5: Root Cause Analysis Summary
+ * GET /api/reports/osh-root-causes
+ */
+exports.oshRootCauses = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    const where = {};
+    if (union_id) where.unionId = union_id;
+    
+    if (from_date || to_date) {
+      where.dateTimeOccurred = {};
+      if (from_date) where.dateTimeOccurred[Op.gte] = new Date(from_date);
+      if (to_date) where.dateTimeOccurred[Op.lte] = new Date(to_date);
+    }
+
+    const rootCauses = await sequelize.query(
+      `SELECT 
+        SUM(CASE WHEN root_cause_unsafe_act = 1 THEN 1 ELSE 0 END) as unsafe_act,
+        SUM(CASE WHEN root_cause_equipment_failure = 1 THEN 1 ELSE 0 END) as equipment_failure,
+        SUM(CASE WHEN root_cause_environmental = 1 THEN 1 ELSE 0 END) as environmental,
+        COUNT(*) as total_incidents
+      FROM osh_incidents 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_time_occurred BETWEEN :fromDate AND :toDate' : ''}`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    const result = rootCauses[0];
+    const total = parseInt(result.total_incidents);
+
+    res.json({
+      total_incidents: total,
+      root_causes: {
+        unsafe_act: parseInt(result.unsafe_act),
+        equipment_failure: parseInt(result.equipment_failure),
+        environmental: parseInt(result.environmental),
+        other: total - parseInt(result.unsafe_act) - parseInt(result.equipment_failure) - parseInt(result.environmental)
+      },
+      percentages: total > 0 ? {
+        unsafe_act: ((parseInt(result.unsafe_act) / total) * 100).toFixed(2),
+        equipment_failure: ((parseInt(result.equipment_failure) / total) * 100).toFixed(2),
+        environmental: ((parseInt(result.environmental) / total) * 100).toFixed(2),
+        other: (((total - parseInt(result.unsafe_act) - parseInt(result.equipment_failure) - parseInt(result.environmental)) / total) * 100).toFixed(2)
+      } : {}
+    });
+  } catch (err) {
+    console.error('OSH root causes error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

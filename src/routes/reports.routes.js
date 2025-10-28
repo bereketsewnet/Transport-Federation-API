@@ -59,4 +59,13 @@ router.get('/cache', auth, requireRole('admin'), ctrl.listCache);
 router.get('/cache/:id', auth, requireRole('admin'), ctrl.getCacheById);
 router.delete('/cache/:id', auth, requireRole('admin'), ctrl.removeCache);
 
+// ==============================================
+// OSH (OCCUPATIONAL SAFETY AND HEALTH) REPORTS
+// ==============================================
+router.get('/osh-summary', auth, requireRole('admin'), ctrl.oshSummary);
+router.get('/osh-high-severity', auth, requireRole('admin'), ctrl.oshHighSeverity);
+router.get('/osh-regulatory-reports', auth, requireRole('admin'), ctrl.oshRegulatoryReports);
+router.get('/osh-monthly-trends', auth, requireRole('admin'), ctrl.oshMonthlyTrends);
+router.get('/osh-root-causes', auth, requireRole('admin'), ctrl.oshRootCauses);
+
 module.exports = router;

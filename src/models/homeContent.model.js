@@ -4,44 +4,31 @@ const sequelize = require('../config/db');
 
 const HomeContent = sequelize.define('HomeContent', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  
-  // Hero Section
-  hero_title_en: { type: DataTypes.TEXT, allowNull: false },
-  hero_title_am: { type: DataTypes.TEXT, allowNull: false },
-  hero_subtitle_en: { type: DataTypes.TEXT, allowNull: false },
-  hero_subtitle_am: { type: DataTypes.TEXT, allowNull: false },
-  
-  // Overview Section
-  overview_en: { type: DataTypes.TEXT, allowNull: false },
-  overview_am: { type: DataTypes.TEXT, allowNull: false },
-  
-  // Statistics
-  stat1_label_en: { type: DataTypes.STRING(100) },
-  stat1_label_am: { type: DataTypes.STRING(100) },
-  stat1_value: { type: DataTypes.INTEGER },
-  
-  stat2_label_en: { type: DataTypes.STRING(100) },
-  stat2_label_am: { type: DataTypes.STRING(100) },
-  stat2_value: { type: DataTypes.INTEGER },
-  
-  stat3_label_en: { type: DataTypes.STRING(100) },
-  stat3_label_am: { type: DataTypes.STRING(100) },
-  stat3_value: { type: DataTypes.INTEGER },
-  
-  stat4_label_en: { type: DataTypes.STRING(100) },
-  stat4_label_am: { type: DataTypes.STRING(100) },
-  stat4_value: { type: DataTypes.INTEGER },
-  
-  // Hero Image
-  hero_image: { type: DataTypes.STRING(500) },
-  
-  // Metadata
-  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-  updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-  updated_by: { type: DataTypes.INTEGER }
+  heroTitleEn: { type: DataTypes.TEXT, field: 'hero_title_en', allowNull: false },
+  heroTitleAm: { type: DataTypes.TEXT, field: 'hero_title_am', allowNull: false },
+  heroSubtitleEn: { type: DataTypes.TEXT, field: 'hero_subtitle_en', allowNull: false },
+  heroSubtitleAm: { type: DataTypes.TEXT, field: 'hero_subtitle_am', allowNull: false },
+  heroImage: { type: DataTypes.STRING(500), field: 'hero_image' },
+  overviewEn: { type: DataTypes.TEXT, field: 'overview_en', allowNull: false },
+  overviewAm: { type: DataTypes.TEXT, field: 'overview_am', allowNull: false },
+  stat1LabelEn: { type: DataTypes.STRING(100), field: 'stat1_label_en' },
+  stat1LabelAm: { type: DataTypes.STRING(100), field: 'stat1_label_am' },
+  stat1Value: { type: DataTypes.INTEGER, field: 'stat1_value' },
+  stat2LabelEn: { type: DataTypes.STRING(100), field: 'stat2_label_en' },
+  stat2LabelAm: { type: DataTypes.STRING(100), field: 'stat2_label_am' },
+  stat2Value: { type: DataTypes.INTEGER, field: 'stat2_value' },
+  stat3LabelEn: { type: DataTypes.STRING(100), field: 'stat3_label_en' },
+  stat3LabelAm: { type: DataTypes.STRING(100), field: 'stat3_label_am' },
+  stat3Value: { type: DataTypes.INTEGER, field: 'stat3_value' },
+  stat4LabelEn: { type: DataTypes.STRING(100), field: 'stat4_label_en' },
+  stat4LabelAm: { type: DataTypes.STRING(100), field: 'stat4_label_am' },
+  stat4Value: { type: DataTypes.INTEGER, field: 'stat4_value' },
+  createdAt: { type: DataTypes.DATE, field: 'created_at', defaultValue: DataTypes.NOW },
+  updatedAt: { type: DataTypes.DATE, field: 'updated_at', defaultValue: DataTypes.NOW },
+  updatedBy: { type: DataTypes.INTEGER, field: 'updated_by' }
 }, { 
   tableName: 'home_content', 
-  timestamps: false 
+  timestamps: true 
 });
 
 module.exports = HomeContent;
