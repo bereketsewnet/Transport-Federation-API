@@ -111,7 +111,7 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"union_code\": \"ET01\",\n  \"name_en\": \"Ethio Telecom Workers Union\",\n  \"name_am\": \"የኢትዮ ቴሌኮም ሠራተኞች ህብረት\",\n  \"sector\": \"Communication\",\n  \"organization\": \"Ethio Telecom\",\n  \"established_date\": \"2010-01-01\",\n  \"terms_of_election\": 3,\n  \"strategic_plan_in_place\": true\n}"
+                "raw": "{\n  \"union_code\": \"ET01\",\n  \"name_en\": \"Ethio Telecom Workers Union\",\n  \"name_am\": \"የኢትዮ ቴሌኮም ሠራተኞች ህብረት\",\n  \"sector\": \"Communication\",\n  \"organization\": \"Ethio Telecom\",\n  \"established_date\": \"2010-01-01\",\n  \"terms_of_election\": 3,\n  \"general_assembly_date\": \"2024-06-15\",\n  \"strategic_plan_in_place\": true\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/unions",
@@ -176,7 +176,7 @@
               ],
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"name_en\": \"Updated Ethio Telecom Union\",\n  \"terms_of_election\": 4\n}"
+                "raw": "{\n  \"name_en\": \"Updated Ethio Telecom Union\",\n  \"terms_of_election\": 4,\n  \"general_assembly_date\": \"2025-06-20\"\n}"
               },
               "url": {
                 "raw": "{{base_url}}/api/unions/1",
@@ -1129,6 +1129,42 @@
               "header":[{"key":"Content-Type","value":"application/json"}],
               "body":{"mode":"raw","raw":"{\n  \"report_name\": \"members_by_year\",\n  \"payload\": { \"2021\": 120, \"2022\": 140 }\n}"},
               "url":{"raw":"{{base_url}}/api/reports/cache","host":["{{base_url}}"],"path":["api","reports","cache"]}
+            },
+            "response": []
+          },
+          {
+            "name": "General Assembly Status Report (conducted/not conducted)",
+            "request": {
+              "method":"GET",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url":{"raw":"{{base_url}}/api/reports/unions-general-assembly-status","host":["{{base_url}}"],"path":["api","reports","unions-general-assembly-status"]}
+            },
+            "response": []
+          },
+          {
+            "name": "List Unions Without General Assembly",
+            "request": {
+              "method":"GET",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url":{"raw":"{{base_url}}/api/reports/unions-no-general-assembly","host":["{{base_url}}"],"path":["api","reports","unions-no-general-assembly"]}
+            },
+            "response": []
+          },
+          {
+            "name": "List Unions with GAM on Specific Date",
+            "request": {
+              "method":"GET",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url":{"raw":"{{base_url}}/api/reports/unions-assembly-on-date?date=2024-06-15","host":["{{base_url}}"],"path":["api","reports","unions-assembly-on-date"],"query":[{"key":"date","value":"2024-06-15"}]}
+            },
+            "response": []
+          },
+          {
+            "name": "List Unions with Recent Assembly (< 3 months)",
+            "request": {
+              "method":"GET",
+              "auth":{ "type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}","type":"string"}] },
+              "url":{"raw":"{{base_url}}/api/reports/unions-assembly-recent?months=3","host":["{{base_url}}"],"path":["api","reports","unions-assembly-recent"],"query":[{"key":"months","value":"3"}]}
             },
             "response": []
           }

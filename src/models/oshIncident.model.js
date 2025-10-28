@@ -7,7 +7,7 @@ const OSHIncident = sequelize.define('OSHIncident', {
   // Basic Information
   unionId: { type: DataTypes.INTEGER, field: 'union_id', allowNull: false },
   accidentCategory: { 
-    type: DataTypes.ENUM('People', 'Property/Asset'), 
+    type: DataTypes.STRING(255), 
     field: 'accident_category', 
     allowNull: false 
   },
@@ -22,12 +22,12 @@ const OSHIncident = sequelize.define('OSHIncident', {
   
   // Severity Levels
   injurySeverity: { 
-    type: DataTypes.ENUM('Near-Miss', 'First Aid Case (FAC)', 'Medical Treatment Case (MTC)', 'Restricted Work Case (RWC)', 'Permanent Disability/Major Injury', 'Fatality', 'Minor', 'Moderate', 'Major', 'Fatal', 'None'), 
+    type: DataTypes.STRING(255), 
     field: 'injury_severity', 
     defaultValue: 'None' 
   },
   damageSeverity: { 
-    type: DataTypes.ENUM('Minor', 'Moderate', 'Major', 'Severe/Critical', 'None'), 
+    type: DataTypes.STRING(255), 
     field: 'damage_severity', 
     defaultValue: 'None' 
   },

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS osh_incidents (
   
   -- Basic Information
   union_id INT NOT NULL,
-  accident_category ENUM('People', 'Property/Asset') NOT NULL,
+  accident_category VARCHAR(255) NOT NULL,
   date_time_occurred DATETIME NOT NULL,
   
   -- Location Details
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS osh_incidents (
   location_gps_longitude DECIMAL(11, 8),
   
   -- Severity Levels
-  injury_severity ENUM('Near-Miss', 'First Aid Case (FAC)', 'Medical Treatment Case (MTC)', 'Restricted Work Case (RWC)', 'Permanent Disability/Major Injury', 'Fatality', 'Minor', 'Moderate', 'Major', 'Fatal', 'None') DEFAULT 'None',
-  damage_severity ENUM('Minor', 'Moderate', 'Major', 'Severe/Critical', 'None') DEFAULT 'None',
+  injury_severity VARCHAR(255) DEFAULT 'None',
+  damage_severity VARCHAR(255) DEFAULT 'None',
   
   -- Root Cause Analysis
   root_cause_unsafe_act BOOLEAN DEFAULT FALSE,

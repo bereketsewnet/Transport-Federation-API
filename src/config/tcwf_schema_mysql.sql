@@ -107,15 +107,20 @@ CREATE TABLE IF NOT EXISTS `terminated_unions` (
 -- Login accounts (members)
 CREATE TABLE IF NOT EXISTS `login_accounts` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `mem_id` INT NOT NULL,
+  `mem_id` INT,
   `username` VARCHAR(100) UNIQUE NOT NULL,
   `password_hash` TEXT NOT NULL,
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 1,
-  `security_question` TEXT,
-  `security_answer_hash` TEXT,
-  `role` VARCHAR(50) NOT NULL DEFAULT 'user',
+  `security_question_1_id` INT,
+  `security_answer_1_hash` TEXT,
+  `security_question_2_id` INT,
+  `security_answer_2_hash` TEXT,
+  `security_question_3_id` INT,
+  `security_answer_3_hash` TEXT,
+  `role` VARCHAR(50) NOT NULL DEFAULT 'member',
   `last_login` DATETIME,
   `is_locked` TINYINT(1) NOT NULL DEFAULT 0,
+  `password_reset_required` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`mem_id`) REFERENCES `members`(`mem_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -183,6 +188,8 @@ CREATE TABLE IF NOT EXISTS `news` (
   `summary` TEXT,
   `published_at` DATETIME,
   `is_published` TINYINT(1) NOT NULL DEFAULT 0,
+  `image_filename` VARCHAR(500),
+  `is_local` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -198,6 +205,7 @@ CREATE TABLE IF NOT EXISTS `photos` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `gallery_id` INT,
   `filename` VARCHAR(255),
+  `is_local` TINYINT(1) NOT NULL DEFAULT 0,
   `caption` TEXT,
   `taken_at` DATE,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

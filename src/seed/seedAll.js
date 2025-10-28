@@ -21,16 +21,24 @@ const { faker } = require('@faker-js/faker');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-const UNIONS_COUNT = parseInt(process.env.UNIONS_COUNT || '20', 10);
-const MEMBERS_PER_UNION = parseInt(process.env.MEMBERS_PER_UNION || '50', 10);
+const UNIONS_COUNT = parseInt(process.env.UNIONS_COUNT || '5', 10); // Reduced to 5
+const MEMBERS_PER_UNION = parseInt(process.env.MEMBERS_PER_UNION || '8', 10); // Reduced to 8
 const CREATE_EXECUTIVES_PCT = parseFloat(process.env.CREATE_EXECUTIVES_PCT || '0.15'); // 15%
 const LOGIN_ACCOUNT_PCT = parseFloat(process.env.LOGIN_ACCOUNT_PCT || '0.2'); // 20% of members get login accounts
-const CBAS_PER_UNION = parseInt(process.env.CBAS_PER_UNION || '2', 10);
-const GALLERIES_COUNT = parseInt(process.env.GALLERIES_COUNT || '6', 10);
-const PHOTOS_PER_GALLERY = parseInt(process.env.PHOTOS_PER_GALLERY || '8', 10);
+const CBAS_PER_UNION = parseInt(process.env.CBAS_PER_UNION || '1', 10); // Reduced to 1
+const GALLERIES_COUNT = parseInt(process.env.GALLERIES_COUNT || '3', 10); // Reduced to 3
+const PHOTOS_PER_GALLERY = parseInt(process.env.PHOTOS_PER_GALLERY || '4', 10); // Reduced to 4
 const CLEAR_EXISTING_DATA = process.env.CLEAR_EXISTING_DATA === 'true';
 
 const PASSWORD = process.env.DEFAULT_USER_PASSWORD || 'Password123!';
+
+// Standardized data arrays
+const SECTORS = ['Transport', 'Communication', 'Logistic', 'Aviation', 'Electricity', 'Maritime'];
+const ORGANIZATIONS = ['PLC', 'Solo', 'Corporation', 'Enterprise', 'Ltd', 'Group'];
+const EDUCATION_LEVELS = ['Certificate', 'High School', 'Diploma', 'Degree', 'Masters', 'PhD'];
+const SEX_VALUES = ['Male', 'Female']; // Male, Female
+const POSITIONS = ['Chairperson', 'Secretary', 'Treasurer', 'Member'];
+const CBA_STATUSES = ['active', 'expired', 'renewed'];
 
 // Admin credentials
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
@@ -144,12 +152,11 @@ async function main() {
       for (let i = 0; i < UNIONS_COUNT; i++) {
         const timestamp = Date.now();
         unions.push({
-          union_code: `U${timestamp}${i}`,
-          name_en: `${faker.company.name()} Union`,
-          // small Amharic-like placeholder (faker has no Amharic locale)
-          name_am: `ኢትዮጵያ ${faker.company.name().split(' ')[0]}`,
-          sector: faker.helpers.arrayElement(['Transport', 'Electric', 'Telecom', 'Manufacturing', 'Public']),
-          organization: faker.company.name(),
+          union_code: `义务教育U${timestamp}${i}`,
+          name_en: `${faker.company.name().split(' ')[0]} ${SECTORS[i % SECTORS.length]} Workers Union`,
+          name_am: `የ${SECTORS[i % SECTORS.length]} ሠራተኞች ማኅበር`,
+          sector: SECTORS[i % SECTORS.length],
+          organization: `${faker.company.name().split(' ')[0]} ${ORGANIZATIONS[i % ORGANIZATIONS.length]}`,
           established_date: faker.date.past({ years: 20 }),
           terms_of_election: faker.number.int({ min: 2, max: 6 }),
           general_assembly_date: faker.date.future({ years: 1 }),
@@ -192,9 +199,9 @@ async function main() {
             first_name: first,
             father_name: father,
             surname: surname,
-            sex: faker.helpers.arrayElement(['M', 'F']),
+            sex: faker.helpers.arrayElement(SEX_VALUES),
             birthdate: faker.date.between({ from: '1960-01-01', to: '2002-12-31' }),
-            education: faker.helpers.arrayElement(['None', 'Primary', 'Secondary', 'Diploma', 'Bachelors', 'Masters']),
+            education: faker.helpers.arrayElement(EDUCATION_LEVELS),
             phone: `09${faker.string.numeric(8)}`,
             email,
             salary: parseFloat(faker.finance.amount(1000, 50000, 2)),
@@ -240,7 +247,7 @@ async function main() {
         surname: 'User',
         sex: 'M',
         birthdate: faker.date.between({ from: '1980-01-01', to: '1990-12-31' }),
-        education: 'Bachelors',
+        education: 'Degree',
         phone: ADMIN_PHONE,
         email: ADMIN_EMAIL,
         salary: 50000.00,
@@ -406,7 +413,7 @@ async function main() {
           executives.push({
             union_id: unionId,
             mem_id: member ? (member.mem_id || member.id) : null,
-            position: faker.helpers.arrayElement(['Chairperson', 'Secretary', 'Treasurer', 'Member']),
+            position: faker.helpers.arrayElement(POSITIONS),
             appointed_date: faker.date.past({ years: 3 }),
             term_start_date: faker.date.past({ years: 3 }),
             term_end_date: faker.date.future({ years: 2 }),
@@ -441,7 +448,7 @@ async function main() {
           cbas.push({
             union_id: unionId,
             duration_years: duration,
-            status: faker.helpers.arrayElement(['active', 'expired', 'renewed']),
+            status: faker.helpers.arrayElement(CBA_STATUSES),
             registration_date: regDate,
             next_end_date: nextEnd,
             renewed_date: faker.datatype.boolean() ? faker.date.between({ from: regDate, to: nextEnd }) : null,

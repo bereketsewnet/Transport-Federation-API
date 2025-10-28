@@ -131,9 +131,21 @@ exports.remove = async (req,res) => {
     }
 
     if (confirm === 'true') {
+      // Delete related records first
+      // Delete login account if exists
+      await LoginAccount.destroy({ where: { mem_id: found.mem_id } });
+      
+      // Delete union executives if member is an executive
+      const UnionExecutive = require('../models/unionExecutive.model');
+      await UnionExecutive.destroy({ where: { mem_id: found.mem_id } });
+      
+      // Now delete the member
       await found.destroy();
       return res.json({ message: 'Member deleted' });
     }
     return res.status(400).json({ message: 'Deletion requires ?confirm=true or archive=true' });
-  } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
+  } catch (err) { 
+    console.error('Delete member error:', err); 
+    res.status(500).json({ message: err.message || 'Server error' }); 
+  }
 };
