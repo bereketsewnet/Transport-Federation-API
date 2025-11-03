@@ -175,6 +175,8 @@ exports.getAboutContent = async (req, res) => {
         mission_am: 'ሠራተኛዉን በማኅበርና ፌዴሬሽን ውስጥ በማደራጀት የእነሱን መብት በመጠበቅና የስራ ሁኔታቸውን በማሻሻል።',
         vision_en: 'To see workers with guaranteed rights, fair wages, and safe working conditions across all transport and communication sectors.',
         vision_am: 'የሥራ ዋስትናው የተረጋገጠ፣ ፍትሃዊ ደሞዝ፣ እና ደህንነቱ የተጠበቀ የስራ ሁኔታ ያላቸው ሠራተኞች በሁሉም የትራንስፖርትና መገናኛ ዘርፎች ውስጥ እንዲታዩ።',
+        description_en: 'The Industrial Federation of Transport and Communication Workers of Ethiopia (TCWF) is a national trade union federation representing workers across Ethiopia\'s transport and communication sectors. Established with the mission to organize, protect, and empower workers, TCWF works tirelessly to ensure fair wages, safe working conditions, and the protection of workers\' rights. Through strategic partnerships, advocacy, and capacity building programs, we strive to create a better working environment for all workers in the transport and communication industries.',
+        description_am: 'የኢትዮጵያ የትራንስፖርትና መገናኛ ሠራተኞች የኢንዱስትሪ ፌዴሬሽን (TCWF) በኢትዮጵያ ውስጥ በትራንስፖርትና መገናኛ ዘርፎች ውስጥ የሚሰሩ ሠራተኞችን የሚወክል የብሔራዊ የሠራተኛ ማኅበር ፌዴሬሽን ነው። ሠራተኞችን ማደራጀት፣ መጠበቅ እና አቅማቸውን ማሳደግ የሚለውን ተልዕኮ ከያዘ በኋላ የተመሠረተው TCWF ፍትሃዊ ደሞዞች፣ ደህንነቱ የተጠበቀ የስራ ሁኔታዎች እና የሠራተኞች መብቶችን የመጠበቅ ዓላማ እየኖረ ነው። በተዋጣረ ዕምነት፣ ድጋፍ እና አቅም ገንቢ ፕሮግራሞች በኩል በትራንስፖርትና መገናኛ ኢንዱስትሪዎች ውስጥ ለሁሉም ሠራተኞች የተሻለ የስራ አካባቢ ለመፍጠር እየተጋነን ነን።',
         values_en: ['Humanity', 'Commitment', 'Democratic Culture', 'Transparency', 'Unity'],
         values_am: ['ሰበዓዊነት', 'ቁርጠኝነት', 'የዲሞክራሲ ባህል', 'ግልጽነት', 'አንድነት'],
         history_en: 'The Industrial Federation of Transport and Communication Workers of Ethiopia was established to represent and protect the rights of workers in these vital sectors.',

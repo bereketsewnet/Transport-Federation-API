@@ -11,6 +11,10 @@ const AboutContent = sequelize.define('AboutContent', {
   vision_en: { type: DataTypes.TEXT, allowNull: false },
   vision_am: { type: DataTypes.TEXT, allowNull: false },
   
+  // About Us Description
+  description_en: { type: DataTypes.TEXT, allowNull: true },
+  description_am: { type: DataTypes.TEXT, allowNull: true },
+  
   // Values (JSON arrays)
   values_en: { type: DataTypes.JSON, defaultValue: [] },
   values_am: { type: DataTypes.JSON, defaultValue: [] },
