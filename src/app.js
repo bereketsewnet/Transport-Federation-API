@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: ['https://frontend.lula.com.et', 'http://localhost:3000'],
+  origin: process.env.FRONT_END_URL || 'http://127.0.0.1:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));

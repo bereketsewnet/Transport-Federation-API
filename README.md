@@ -103,3 +103,7 @@ The examples are heuristic and based on common patterns used by the controllers 
 
 ### Notes
 - In production, do not run destructive sync. The server has a commented `sequelize.sync({ alter: true })` hint—keep it disabled unless you fully understand the implications.
+
+# wnat restart the server
+pm2 restart tcwf-api
+

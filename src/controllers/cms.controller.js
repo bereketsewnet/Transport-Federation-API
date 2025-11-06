@@ -3,6 +3,7 @@ const HomeContent = require('../models/homeContent.model');
 const AboutContent = require('../models/aboutContent.model');
 const Executive = require('../models/executive.model');
 const ContactInfo = require('../models/contactInfo.model');
+const sequelize = require('../config/db');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
@@ -37,6 +38,46 @@ function toSnakeCase(obj) {
     result[snakeKey] = toSnakeCase(value);
   }
   return result;
+}
+
+// Ensure recently added columns exist (handles older databases where migration wasn't run)
+let aboutDescriptionColumnsEnsured = false;
+async function ensureAboutDescriptionColumns() {
+  if (aboutDescriptionColumnsEnsured) return;
+
+  const [results] = await sequelize.query(`
+    SELECT COLUMN_NAME 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'about_content' 
+      AND COLUMN_NAME IN ('description_en', 'description_am')
+  `);
+
+  const hasDescriptionEn = results.some((column) => column.COLUMN_NAME === 'description_en');
+  const hasDescriptionAm = results.some((column) => column.COLUMN_NAME === 'description_am');
+
+  const queries = [];
+
+  if (!hasDescriptionEn) {
+    queries.push(`
+      ALTER TABLE about_content 
+      ADD COLUMN description_en TEXT NULL AFTER vision_am
+    `);
+  }
+
+  if (!hasDescriptionAm) {
+    const afterColumn = hasDescriptionEn ? 'description_en' : 'vision_am';
+    queries.push(`
+      ALTER TABLE about_content 
+      ADD COLUMN description_am TEXT NULL AFTER ${afterColumn}
+    `);
+  }
+
+  for (const query of queries) {
+    await sequelize.query(query);
+  }
+
+  aboutDescriptionColumnsEnsured = true;
 }
 
 // ==================== HOME CONTENT ====================
@@ -166,6 +207,8 @@ exports.uploadHeroImage = async (req, res) => {
 
 exports.getAboutContent = async (req, res) => {
   try {
+    await ensureAboutDescriptionColumns();
+    
     let aboutContent = await AboutContent.findOne();
     
     // If no content exists, create default
@@ -204,6 +247,8 @@ exports.getAboutContent = async (req, res) => {
 
 exports.updateAboutContent = async (req, res) => {
   try {
+    await ensureAboutDescriptionColumns();
+
     const updateData = toSnakeCase(req.body);
     updateData.updated_by = req.user.id;
     
