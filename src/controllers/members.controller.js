@@ -109,7 +109,7 @@ exports.remove = async (req,res) => {
 
     if (archive === 'true') {
       // move snapshot to archives
-      await Archive.create({
+      const archivedRecord = await Archive.create({
         mem_id: found.mem_id,
         union_id: found.union_id,
         member_code: found.member_code,
@@ -123,11 +123,14 @@ exports.remove = async (req,res) => {
         email: found.email,
         salary: found.salary,
         registry_date: found.registry_date,
-        resigned_date: new Date(),
-        reason: req.body.reason || 'Archived via API'
+        resigned_date: req.body?.resigned_date ? new Date(req.body.resigned_date) : new Date(),
+        reason: req.body?.reason || 'Archived via API'
       });
       await found.destroy();
-      return res.json({ message: 'Member archived' });
+      return res.json({ 
+        message: 'Member archived',
+        archive: archivedRecord.toJSON()
+      });
     }
 
     if (confirm === 'true') {
