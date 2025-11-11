@@ -52,6 +52,12 @@ router.get('/terminated-unions-count', auth, requireRole('admin'), ctrl.terminat
 router.get('/terminated-unions-list', auth, requireRole('admin'), ctrl.terminatedUnionsList);
 
 // ==============================================
+// ORGANIZATION LEADERS / CEOs (Reports 22-23)
+// ==============================================
+router.get('/organization-leaders-summary', auth, requireRole('admin'), ctrl.organizationLeadersSummary);
+router.get('/organization-leaders-list', auth, requireRole('admin'), ctrl.organizationLeadersList);
+
+// ==============================================
 // REPORT CACHE MANAGEMENT
 // ==============================================
 router.post('/cache', auth, requireRole('admin'), ctrl.createCache);

@@ -2931,7 +2931,8 @@ Errors:
 }
 ```
 
- 
+
+ 
  ## OSH (Occupational Safety and Health) Incidents
 
 ### [GET] {{base_url}}/api/osh-incidents?union_id=1&accident_category=People&injury_severity=Major&status=open&from_date=2024-01-01&to_date=2024-12-31&page=1&per_page=20 - List OSH incidents (public)
@@ -3547,6 +3548,87 @@ Success (200):
     "equipment_failure": "28.57",
     "environmental": "14.29",
     "other": "0.00"
+  }
+}
+```
+
+Errors:
+- 401:
+```json
+{
+  "message": "Unauthorized"
+}
+```
+- 500:
+```json
+{
+  "message": "Server error"
+}
+```
+
+### [GET] {{base_url}}/api/reports/organization-leaders-summary - Organization Leaders Summary
+Group: Reports
+
+Success (200):
+```json
+{
+  "total_leaders": 0,
+  "by_sector": [
+    {
+      "sector": "Communication",
+      "count": 0
+    }
+  ],
+  "by_organization": [
+    {
+      "organization": "Ethio Telecom",
+      "count": 0
+    }
+  ]
+}
+```
+
+Errors:
+- 401:
+```json
+{
+  "message": "Unauthorized"
+}
+```
+- 500:
+```json
+{
+  "message": "Server error"
+}
+```
+
+### [GET] {{base_url}}/api/reports/organization-leaders-list?sector=Communication&page=1&per_page=20 - Organization Leaders Filtered List
+Group: Reports
+
+Success (200):
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "union_id": 1,
+      "title": "Mr",
+      "first_name": "Yared",
+      "father_name": "Kebede",
+      "surname": "Tadesse",
+      "position": "CEO",
+      "phone": "+251911222333",
+      "email": "yared@org.com",
+      "sector": "Communication",
+      "organization": "Ethio Telecom",
+      "created_at": "2025-10-18T08:00:00.000Z",
+      "union_name": "Ethio Telecom Workers Union"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 1,
+    "per_page": 20
   }
 }
 ```

@@ -8,6 +8,7 @@ const UnionExecutive = require('../models/unionExecutive.model');
 const TerminatedUnion = require('../models/terminatedUnion.model');
 const ReportCache = require('../models/reportCache.model');
 const OSHIncident = require('../models/oshIncident.model');
+const OrgLeader = require('../models/orgLeader.model');
 
 /**
  * COMPREHENSIVE REPORTS CONTROLLER
@@ -721,6 +722,142 @@ exports.terminatedUnionsList = async (req, res) => {
     });
   } catch (err) {
     console.error('Terminated unions list error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ==============================================
+// ORGANIZATION LEADERS / CEOs
+// ==============================================
+
+/**
+ * Report 22: Organization Leaders summary by sector & organization
+ * GET /api/reports/organization-leaders-summary
+ */
+exports.organizationLeadersSummary = async (req, res) => {
+  try {
+    const total = await OrgLeader.count();
+
+    const bySector = await sequelize.query(
+      `SELECT 
+        COALESCE(sector, 'Unknown') AS sector,
+        COUNT(*) AS count
+      FROM organization_leaders
+      GROUP BY sector
+      ORDER BY count DESC`,
+      { type: QueryTypes.SELECT }
+    );
+
+    const byOrganization = await sequelize.query(
+      `SELECT 
+        COALESCE(organization, 'Unknown') AS organization,
+        COUNT(*) AS count
+      FROM organization_leaders
+      GROUP BY organization
+      ORDER BY count DESC`,
+      { type: QueryTypes.SELECT }
+    );
+
+    res.json({
+      total_leaders: total,
+      by_sector: bySector.map(item => ({
+        sector: item.sector,
+        count: parseInt(item.count, 10)
+      })),
+      by_organization: byOrganization.map(item => ({
+        organization: item.organization,
+        count: parseInt(item.count, 10)
+      }))
+    });
+  } catch (err) {
+    console.error('Organization leaders summary error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Report 23: Filterable list of organization leaders / CEOs
+ * GET /api/reports/organization-leaders-list
+ */
+exports.organizationLeadersList = async (req, res) => {
+  try {
+    const {
+      q,
+      union_id,
+      sector,
+      organization,
+      page = 1,
+      per_page = 20
+    } = req.query;
+
+    const limit = Math.max(1, parseInt(per_page, 10));
+    const currentPage = Math.max(1, parseInt(page, 10));
+    const offset = (currentPage - 1) * limit;
+
+    let baseQuery = `
+      FROM organization_leaders ol
+      LEFT JOIN unions u ON ol.union_id = u.union_id
+      WHERE 1=1
+    `;
+
+    const replacements = {};
+
+    if (union_id) {
+      baseQuery += ' AND ol.union_id = :union_id';
+      replacements.union_id = union_id;
+    }
+
+    if (sector) {
+      baseQuery += ' AND ol.sector = :sector';
+      replacements.sector = sector;
+    }
+
+    if (organization) {
+      baseQuery += ' AND ol.organization = :organization';
+      replacements.organization = organization;
+    }
+
+    if (q) {
+      baseQuery += `
+        AND (
+          ol.first_name LIKE :q OR
+          ol.father_name LIKE :q OR
+          ol.surname LIKE :q OR
+          ol.position LIKE :q OR
+          ol.title LIKE :q
+        )
+      `;
+      replacements.q = `%${q}%`;
+    }
+
+    const countResult = await sequelize.query(
+      `SELECT COUNT(*) AS count ${baseQuery}`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+
+    const data = await sequelize.query(
+      `SELECT 
+        ol.*,
+        u.name_en AS union_name
+      ${baseQuery}
+      ORDER BY ol.created_at DESC, ol.id DESC
+      LIMIT :limit OFFSET :offset`,
+      {
+        replacements: { ...replacements, limit, offset },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    res.json({
+      data,
+      meta: {
+        total: parseInt(countResult[0]?.count || 0, 10),
+        page: currentPage,
+        per_page: limit
+      }
+    });
+  } catch (err) {
+    console.error('Organization leaders list error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
