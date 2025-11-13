@@ -14,6 +14,12 @@ const TerminatedUnion = sequelize.define('TerminatedUnion', {
   general_assembly_date: { type: DataTypes.DATEONLY },
   strategic_plan_in_place: { type: DataTypes.BOOLEAN },
   external_audit_date: { type: DataTypes.DATEONLY },
+  region: { type: DataTypes.STRING(100) },
+  zone: { type: DataTypes.STRING(100) },
+  city: { type: DataTypes.STRING(100) },
+  sub_city: { type: DataTypes.STRING(100) },
+  woreda: { type: DataTypes.STRING(100) },
+  location_area: { type: DataTypes.STRING(255) },
   terminated_date: { type: DataTypes.DATEONLY },
   termination_reason: { type: DataTypes.TEXT },
   archived_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }

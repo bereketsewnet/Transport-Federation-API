@@ -1,5 +1,6 @@
 // src/controllers/terminatedUnions.controller.js
 const TerminatedUnion = require('../models/terminatedUnion.model');
+const Union = require('../models/union.model');
 const { Op } = require('sequelize');
 
 exports.list = async (req,res) => {
@@ -46,4 +47,62 @@ exports.remove = async (req,res) => {
     await found.destroy();
     res.json({ message: 'Deleted' });
   } catch(err){ console.error(err); res.status(500).json({ message: 'Server error' }); }
+};
+
+exports.restore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const terminatedUnion = await TerminatedUnion.findByPk(id);
+    if (!terminatedUnion) {
+      return res.status(404).json({ message: 'Terminated union not found' });
+    }
+
+    // Check if union already exists (by union_id or union_code)
+    let existingUnion = null;
+    if (terminatedUnion.union_id) {
+      existingUnion = await Union.findByPk(terminatedUnion.union_id);
+    }
+
+    if (existingUnion) {
+      // If union still exists, just remove from terminated list
+      await terminatedUnion.destroy();
+      return res.json({ 
+        message: 'Union restored successfully (was still in unions table)', 
+        restored_union: existingUnion 
+      });
+    }
+
+    // Create new union from terminated union data
+    const unionData = {
+      union_code: terminatedUnion.union_id ? `RESTORED_${terminatedUnion.union_id}` : null,
+      name_en: terminatedUnion.name_en,
+      name_am: terminatedUnion.name_am,
+      sector: terminatedUnion.sector,
+      organization: terminatedUnion.organization,
+      established_date: terminatedUnion.established_date,
+      terms_of_election: terminatedUnion.terms_of_election,
+      general_assembly_date: terminatedUnion.general_assembly_date,
+      strategic_plan_in_place: terminatedUnion.strategic_plan_in_place,
+      external_audit_date: terminatedUnion.external_audit_date,
+      region: terminatedUnion.region,
+      zone: terminatedUnion.zone,
+      city: terminatedUnion.city,
+      sub_city: terminatedUnion.sub_city,
+      woreda: terminatedUnion.woreda,
+      location_area: terminatedUnion.location_area
+    };
+
+    const restoredUnion = await Union.create(unionData);
+
+    // Delete the terminated union record
+    await terminatedUnion.destroy();
+
+    return res.json({ 
+      message: 'Union restored successfully', 
+      restored_union: restoredUnion 
+    });
+  } catch (err) {
+    console.error('Restore union error:', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };

@@ -10,5 +10,6 @@ router.post('/', auth, requireRole('admin'), ctrl.create);
 router.get('/:id', auth, ctrl.getById);
 router.put('/:id', auth, requireRole('admin'), ctrl.update);
 router.delete('/:id', auth, requireRole('admin'), ctrl.remove);
+router.post('/:id/restore', auth, requireRole('admin'), ctrl.restore);
 
 module.exports = router;
