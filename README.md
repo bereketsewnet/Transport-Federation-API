@@ -107,3 +107,6 @@ The examples are heuristic and based on common patterns used by the controllers 
 # wnat restart the server
 pm2 restart tcwf-api
 
+
+## migrions
+node src/migrations/run-location-fields-migration.js

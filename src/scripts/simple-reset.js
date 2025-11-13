@@ -52,7 +52,7 @@ async function resetDatabase() {
     console.log('\n📋 Creating tables...');
     
     // Core tables
-    await sequelize.query(`CREATE TABLE unions (union_id INT AUTO_INCREMENT PRIMARY KEY, union_code VARCHAR(50) UNIQUE, name_en TEXT NOT NULL, name_am TEXT, sector VARCHAR(50), organization TEXT, established_date DATE, terms_of_election INT, general_assembly_date DATE, strategic_plan_in_place TINYINT(1) DEFAULT 0, external_audit_date DATE, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
+    await sequelize.query(`CREATE TABLE unions (union_id INT AUTO_INCREMENT PRIMARY KEY, union_code VARCHAR(50) UNIQUE, name_en TEXT NOT NULL, name_am TEXT, sector VARCHAR(50), organization TEXT, established_date DATE, terms_of_election INT, general_assembly_date DATE, strategic_plan_in_place TINYINT(1) DEFAULT 0, external_audit_date DATE, region VARCHAR(100), zone VARCHAR(100), city VARCHAR(100), sub_city VARCHAR(100), woreda VARCHAR(100), location_area VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
     
     await sequelize.query(`CREATE TABLE members (mem_id INT AUTO_INCREMENT PRIMARY KEY, mem_uuid CHAR(36), union_id INT, member_code VARCHAR(100) UNIQUE, first_name VARCHAR(200) NOT NULL, father_name VARCHAR(200), surname VARCHAR(200), sex VARCHAR(10), birthdate DATE, education VARCHAR(50), phone VARCHAR(50), email VARCHAR(255), salary DECIMAL(12,2), registry_date DATE, is_active TINYINT(1) DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id))`);
     

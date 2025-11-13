@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS `unions` (
   `general_assembly_date` DATE,
   `strategic_plan_in_place` TINYINT(1) NOT NULL DEFAULT 0,
   `external_audit_date` DATE,
+  `region` VARCHAR(100),
+  `zone` VARCHAR(100),
+  `city` VARCHAR(100),
+  `sub_city` VARCHAR(100),
+  `woreda` VARCHAR(100),
+  `location_area` VARCHAR(255),
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -14,6 +14,12 @@ const Union = sequelize.define('Union', {
   general_assembly_date: { type: DataTypes.DATEONLY },
   strategic_plan_in_place: { type: DataTypes.BOOLEAN, defaultValue: false },
   external_audit_date: { type: DataTypes.DATEONLY },
+  region: { type: DataTypes.STRING(100) },
+  zone: { type: DataTypes.STRING(100) },
+  city: { type: DataTypes.STRING(100) },
+  sub_city: { type: DataTypes.STRING(100) },
+  woreda: { type: DataTypes.STRING(100) },
+  location_area: { type: DataTypes.STRING(255) },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'unions', timestamps: false });
