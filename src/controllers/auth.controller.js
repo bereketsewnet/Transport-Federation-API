@@ -70,6 +70,7 @@ exports.login = async (req, res) => {
 };
 
 // Change password (first time or after admin reset)
+// Works for both admin and member accounts - allows setting security questions
 exports.changePassword = async (req, res) => {
   try {
     const { newPassword, securityQuestions } = req.body;
@@ -78,7 +79,7 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    // Get user from JWT (temp token)
+    // Get user from JWT (temp token) - works for both admin and member
     const user = await LoginAccount.findByPk(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -88,7 +89,7 @@ exports.changePassword = async (req, res) => {
     user.must_change_password = false;
     user.password_reset_required = false;
 
-    // If security questions provided, save them
+    // If security questions provided, save them (required for both admin and member)
     if (securityQuestions && Array.isArray(securityQuestions) && securityQuestions.length === 3) {
       for (let i = 0; i < 3; i++) {
         const { questionId, answer } = securityQuestions[i];
@@ -101,10 +102,15 @@ exports.changePassword = async (req, res) => {
         user[`security_answer_${i + 1}_hash`] = answerHash;
       }
     } else if (!user.security_question_1_id) {
-      // If no security questions provided and none exist, require them
+      // If no security questions provided and none exist, require them (for both admin and member)
+      const roleMessage = user.role === 'admin'
+        ? 'Security questions are required for password recovery. Please provide 3 security questions with answers.'
+        : 'Security questions required. Please provide 3 security questions with answers.';
+      
       return res.status(400).json({ 
-        message: 'Security questions required. Please provide 3 security questions with answers.',
-        requireSecurityQuestions: true
+        message: roleMessage,
+        requireSecurityQuestions: true,
+        role: user.role
       });
     }
 
@@ -122,7 +128,8 @@ exports.changePassword = async (req, res) => {
     return res.json({
       token,
       user: payload,
-      message: 'Password changed successfully. You can now use the system.'
+      message: 'Password changed successfully. You can now use the system.',
+      securityQuestionsSet: !!user.security_question_1_id
     });
   } catch (err) {
     console.error(err);
@@ -141,6 +148,7 @@ exports.getSecurityQuestions = async (req, res) => {
 };
 
 // Forgot password - Step 1: Verify username and show security questions
+// Works for both admin and member accounts
 exports.forgotPasswordStep1 = async (req, res) => {
   try {
     const { username } = req.body;
@@ -152,14 +160,20 @@ exports.forgotPasswordStep1 = async (req, res) => {
       return res.status(404).json({ message: 'If this account exists, security questions will be shown.' });
     }
 
-    // Check if security questions are set
+    // Check if security questions are set (works for both admin and member)
     if (!user.security_question_1_id || !user.security_question_2_id || !user.security_question_3_id) {
+      const roleMessage = user.role === 'admin' 
+        ? 'Security questions not set. Please set security questions first or contact another administrator.'
+        : 'Security questions not set. Please contact administrator to reset password.';
+      
       return res.status(400).json({ 
-        message: 'Security questions not set. Please contact administrator to reset password.'
+        message: roleMessage,
+        role: user.role,
+        needsSecurityQuestions: true
       });
     }
 
-    // Return the questions (not the answers!)
+    // Return the questions (not the answers!) - works for both admin and member
     const questions = SECURITY_QUESTIONS;
     const userQuestions = [
       { questionId: user.security_question_1_id, question: questions.find(q => q.id === user.security_question_1_id)?.question },
@@ -169,6 +183,7 @@ exports.forgotPasswordStep1 = async (req, res) => {
 
     return res.json({
       username: user.username,
+      role: user.role, // Include role in response
       securityQuestions: userQuestions,
       message: 'Please answer all 3 security questions'
     });
@@ -179,6 +194,7 @@ exports.forgotPasswordStep1 = async (req, res) => {
 };
 
 // Forgot password - Step 2: Verify answers and reset password
+// Works for both admin and member accounts
 exports.forgotPasswordStep2 = async (req, res) => {
   try {
     const { username, answers, newPassword } = req.body;
@@ -196,7 +212,7 @@ exports.forgotPasswordStep2 = async (req, res) => {
       return res.status(404).json({ message: 'Invalid request' });
     }
 
-    // Verify all 3 answers
+    // Verify all 3 answers (works for both admin and member)
     for (let i = 0; i < 3; i++) {
       const answerHash = user[`security_answer_${i + 1}_hash`];
       if (!answerHash) {
@@ -209,7 +225,7 @@ exports.forgotPasswordStep2 = async (req, res) => {
       }
     }
 
-    // All answers correct - reset password
+    // All answers correct - reset password (works for both admin and member)
     const passwordHash = await bcrypt.hash(newPassword, 12);
     user.password_hash = passwordHash;
     user.must_change_password = false;
@@ -217,7 +233,8 @@ exports.forgotPasswordStep2 = async (req, res) => {
     await user.save();
 
     return res.json({
-      message: 'Password reset successful. You can now login with your new password.'
+      message: 'Password reset successful. You can now login with your new password.',
+      role: user.role // Include role in response
     });
   } catch (err) {
     console.error(err);
