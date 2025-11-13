@@ -1,5 +1,6 @@
 // src/controllers/loginAccounts.controller.js
 const LoginAccount = require('../models/loginAccount.model');
+const Member = require('../models/member.model');
 const bcrypt = require('bcryptjs');
 
 exports.list = async (req,res) => {
@@ -74,6 +75,86 @@ exports.lockUnlock = async (req,res) => {
     await found.save();
     res.json({ message: `Account ${found.is_locked ? 'locked' : 'unlocked'}` });
   } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
+};
+
+exports.resetPasswordByMemberId = async (req, res) => {
+  try {
+    const { mem_id } = req.params;
+    if (!mem_id) return res.status(400).json({ message: 'mem_id parameter required' });
+
+    // Find member by mem_id
+    const member = await Member.findByPk(mem_id);
+    if (!member) return res.status(404).json({ message: 'Member not found' });
+
+    if (!member.member_code) {
+      return res.status(400).json({ message: 'Member does not have a member_code. Cannot reset to default credentials.' });
+    }
+
+    // Find or create login account for this member
+    let loginAccount = await LoginAccount.findOne({ where: { mem_id: member.mem_id } });
+    
+    if (!loginAccount) {
+      // Create new login account if it doesn't exist
+      const defaultPasswordHash = await bcrypt.hash(member.member_code, 12);
+      loginAccount = await LoginAccount.create({
+        mem_id: member.mem_id,
+        username: member.member_code,
+        password_hash: defaultPasswordHash,
+        role: 'member',
+        must_change_password: true,
+        password_reset_required: true,
+        security_question_1_id: null,
+        security_answer_1_hash: null,
+        security_question_2_id: null,
+        security_answer_2_hash: null,
+        security_question_3_id: null,
+        security_answer_3_hash: null
+      });
+    } else {
+      // Reset existing account to defaults
+      const defaultPasswordHash = await bcrypt.hash(member.member_code, 12);
+      
+      // Check if username needs to be changed (handle unique constraint)
+      if (loginAccount.username !== member.member_code) {
+        // Temporarily set username to unique value, then update to member_code
+        const tempUsername = `${member.member_code}_temp_${Date.now()}`;
+        loginAccount.username = tempUsername;
+        await loginAccount.save();
+      }
+      
+      loginAccount.username = member.member_code;
+      loginAccount.password_hash = defaultPasswordHash;
+      loginAccount.must_change_password = true;
+      loginAccount.password_reset_required = true;
+      
+      // Clear all security questions
+      loginAccount.security_question_1_id = null;
+      loginAccount.security_answer_1_hash = null;
+      loginAccount.security_question_2_id = null;
+      loginAccount.security_answer_2_hash = null;
+      loginAccount.security_question_3_id = null;
+      loginAccount.security_answer_3_hash = null;
+      
+      await loginAccount.save();
+    }
+
+    res.json({
+      message: 'Password and username reset to default (member code). User must change password and set security questions on next login.',
+      member_id: member.mem_id,
+      member_code: member.member_code,
+      default_username: member.member_code,
+      default_password: member.member_code,
+      login_account_id: loginAccount.id,
+      password_reset_required: true,
+      must_change_password: true
+    });
+  } catch (err) {
+    console.error('Reset password by member ID error:', err);
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ message: 'Username already exists. Please try again.' });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 exports.remove = async (req,res) => {

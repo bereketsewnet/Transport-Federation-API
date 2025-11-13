@@ -11,6 +11,7 @@ router.post('/', auth, requireRole('admin'), ctrl.create);
 router.get('/:id', auth, requireRole('admin'), ctrl.getById);
 router.put('/:id', auth, requireRole('admin'), ctrl.update);
 router.post('/reset/:username', auth, requireRole('admin'), ctrl.resetPassword); // POST new password
+router.post('/reset-by-member/:mem_id', auth, requireRole('admin'), ctrl.resetPasswordByMemberId); // Reset to default (member code)
 router.put('/:id/lock', auth, requireRole('admin'), ctrl.lockUnlock);
 router.delete('/:id', auth, requireRole('admin'), ctrl.remove);
 
