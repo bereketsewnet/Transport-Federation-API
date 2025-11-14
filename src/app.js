@@ -22,6 +22,8 @@ app.use('/uploads/cms', express.static(path.join(__dirname, '../uploads/cms')));
 app.use('/api/auth', require('./routes/auth.routes'));
 
 // core resources
+app.use('/api/sectors', require('./routes/sectors.routes'));
+app.use('/api/organizations', require('./routes/organizations.routes'));
 app.use('/api/unions', require('./routes/unions.routes'));
 app.use('/api/members', require('./routes/members.routes'));
 app.use('/api/union-executives', require('./routes/unionExecutives.routes'));

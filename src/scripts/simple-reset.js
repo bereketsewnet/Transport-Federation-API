@@ -4,34 +4,11 @@
 require('dotenv').config();
 const sequelize = require('../config/db');
 const bcrypt = require('bcrypt');
-const readline = require('readline');
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-function question(query) {
-  return new Promise(resolve => rl.question(query, resolve));
-}
 
 async function resetDatabase() {
-  console.log('\n⚠️  ============================================');
-  console.log('⚠️   DATABASE RESET SCRIPT');
-  console.log('⚠️  ============================================');
-  console.log('⚠️  This will DROP ALL TABLES and create admin only');
-  console.log('⚠️  ============================================\n');
-
-  const answer = await question('Type "RESET" to confirm: ');
-  
-  if (answer.trim() !== 'RESET') {
-    console.log('\n❌ Cancelled.');
-    rl.close();
-    process.exit(0);
-  }
+  console.log('\n🚀 Resetting database...\n');
 
   try {
-    console.log('\n🚀 Resetting database...\n');
     await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
     
     // Drop all tables
@@ -39,7 +16,7 @@ async function resetDatabase() {
       'osh_incidents', 'reports_cache', 'photos', 'galleries', 'news',
       'contacts', 'visitors', 'archives', 'organization_leaders',
       'login_accounts', 'terminated_unions', 'cbas', 'union_executives',
-      'members', 'unions', 'executives', 'contact_info',
+      'members', 'unions', 'organizations', 'sectors', 'executives', 'contact_info',
       'about_content', 'home_content', 'documents'
     ];
 
@@ -51,7 +28,11 @@ async function resetDatabase() {
     // Recreate core tables manually
     console.log('\n📋 Creating tables...');
     
-    // Core tables
+    // Core tables - Sectors and Organizations first
+    await sequelize.query(`CREATE TABLE sectors (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
+    
+    await sequelize.query(`CREATE TABLE organizations (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL UNIQUE, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
+    
     await sequelize.query(`CREATE TABLE unions (union_id INT AUTO_INCREMENT PRIMARY KEY, union_code VARCHAR(50) UNIQUE, name_en TEXT NOT NULL, name_am TEXT, sector VARCHAR(50), organization TEXT, established_date DATE, terms_of_election INT, general_assembly_date DATE, strategic_plan_in_place TINYINT(1) DEFAULT 0, external_audit_date DATE, region VARCHAR(100), zone VARCHAR(100), city VARCHAR(100), sub_city VARCHAR(100), woreda VARCHAR(100), location_area VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`);
     
     await sequelize.query(`CREATE TABLE members (mem_id INT AUTO_INCREMENT PRIMARY KEY, mem_uuid CHAR(36), union_id INT, member_code VARCHAR(100) UNIQUE, first_name VARCHAR(200) NOT NULL, father_name VARCHAR(200), surname VARCHAR(200), sex VARCHAR(10), birthdate DATE, education VARCHAR(50), phone VARCHAR(50), email VARCHAR(255), salary DECIMAL(12,2), registry_date DATE, is_active TINYINT(1) DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id))`);
@@ -95,6 +76,63 @@ async function resetDatabase() {
     await sequelize.query(`CREATE TABLE osh_incidents (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT NOT NULL, accident_category VARCHAR(255) NOT NULL, date_time_occurred DATETIME NOT NULL, location_site VARCHAR(255), location_building VARCHAR(255), location_area VARCHAR(255), location_gps_latitude DECIMAL(10,8), location_gps_longitude DECIMAL(11,8), injury_severity VARCHAR(255) DEFAULT 'None', damage_severity VARCHAR(255) DEFAULT 'None', root_cause_unsafe_act BOOLEAN DEFAULT FALSE, root_cause_equipment_failure BOOLEAN DEFAULT FALSE, root_cause_environmental BOOLEAN DEFAULT FALSE, root_cause_other TEXT, description TEXT NOT NULL, regulatory_report_required BOOLEAN DEFAULT FALSE, regulatory_report_date DATE, status ENUM('open', 'investigating', 'action_pending', 'closed') DEFAULT 'open', reported_by VARCHAR(255), reported_date DATETIME DEFAULT CURRENT_TIMESTAMP, investigation_notes TEXT, corrective_actions TEXT, preventive_measures TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, created_by INT, updated_by INT, FOREIGN KEY (union_id) REFERENCES unions(union_id), FOREIGN KEY (created_by) REFERENCES login_accounts(id), FOREIGN KEY (updated_by) REFERENCES login_accounts(id))`);
     
     console.log('✅ All tables created!\n');
+
+    // Seed sectors
+    console.log('📋 Seeding sectors...');
+    const sectors = [
+      'Aviation',
+      'Road transport',
+      'Urban transport',
+      'Railway',
+      'Inland transport',
+      'Maritime',
+      'Communication'
+    ];
+    for (const sectorName of sectors) {
+      await sequelize.query(`INSERT INTO sectors (name) VALUES (?)`, { replacements: [sectorName] });
+    }
+    console.log(`✅ Seeded ${sectors.length} sectors`);
+
+    // Seed organizations
+    console.log('📋 Seeding organizations...');
+    const organizations = [
+      'Ethiopian Airlines Group',
+      'Ethiopian Maritime Transport and Logistics',
+      'Addis Ababa City Bus Service Enterprise',
+      'Ethio Telecom',
+      'Ethiopia Posta',
+      'Public Service Transport',
+      'DHL World Wide Express Ethiopia',
+      'Ethiopian Tool Road Enterprise',
+      'International Cargo and Aviation Service',
+      'ISON Experience Ethio call PLC',
+      'Moti Engineering P.L.C',
+      'Addis Ababa Light Railway Transport Service Enterprise',
+      'East West Ethio Transport PLC',
+      'Abyssinia Transport S/C',
+      'Bekelcha Transport S/C',
+      'Geda Transport S/C',
+      'Selam Bus Public Transport PLC',
+      'Ethiopian Railway Corporation',
+      'Dire Dawa Dewele Railway',
+      'Trans Ethiopia PLC',
+      'Demtsu Woyan',
+      'Bahir Dar Public Service Transport',
+      'Hararge Anestgn Melestegn Public Transport',
+      'Hararge Keftegn Public Transport',
+      'Kinfe Rufael Geda',
+      'Tekur Abay Transport S/C',
+      'National Transport',
+      'Elet Derash Erdata Transport',
+      'Derba Transport S/C',
+      'Hohot Transport',
+      'Ethiopian Maritime Training Institute',
+      'Adama Drivers Training Institute'
+    ];
+    for (const orgName of organizations) {
+      await sequelize.query(`INSERT INTO organizations (name) VALUES (?)`, { replacements: [orgName] });
+    }
+    console.log(`✅ Seeded ${organizations.length} organizations\n`);
 
     // Insert default CMS data
     await sequelize.query(`INSERT INTO home_content (hero_title_en, hero_title_am, hero_subtitle_en, hero_subtitle_am, overview_en, overview_am, stat2_label_en, stat2_label_am, stat2_value, stat3_label_en, stat3_label_am, stat3_value, stat4_label_en, stat4_label_am, stat4_value) VALUES ('Transport & Communication Workers Federation', 'የትራንስፖርትና መገናኛ ሠራተኞች ማኅበራት ፌዴሬሽን', 'Empowering workers across Ethiopia''s transport and communication sectors', 'በኢትዮጵያ የትራንስፖርትና መገናኛ ዘርፎች ውስጥ የሰራተኞችን አቅም ማሳደግ', 'The Industrial Federation of Transport and Communication Workers of Ethiopia (TCWF) is a national trade union federation.', 'የኢትዮጵያ የትራንስፖርትና መገናኛ ሠራተኞች የኢንዱስትሪ ፌዴሬሽን', 'Worker Unions', 'የሰራተኛ ማህበራት', 19, 'Years of Service', 'የአገልግሎት ዓመታት', 50, 'Protection Rate', 'የጥበቃ መጠን', 100)`);
@@ -146,7 +184,6 @@ async function resetDatabase() {
     console.error('\n❌ Error:', error.message);
   } finally {
     await sequelize.close();
-    rl.close();
   }
 }
 
