@@ -46,6 +46,39 @@ exports.create = async (req,res) => {
   try {
     if (!req.body.first_name) return res.status(400).json({ message: 'first_name required' });
     
+    // Generate member_code if not provided
+    if (!req.body.member_code || req.body.member_code.trim() === '') {
+      // Generate unique member_code: M-XXXXXXXX (8 random digits)
+      let generatedCode;
+      let isUnique = false;
+      let attempts = 0;
+      const maxAttempts = 100;
+      
+      while (!isUnique && attempts < maxAttempts) {
+        const randomDigits = Math.floor(10000000 + Math.random() * 90000000); // 8-digit number
+        generatedCode = `M-${randomDigits}`;
+        
+        // Check if code already exists
+        const existing = await Member.findOne({ where: { member_code: generatedCode } });
+        if (!existing) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+      
+      if (!isUnique) {
+        return res.status(500).json({ message: 'Failed to generate unique member_code. Please try again.' });
+      }
+      
+      req.body.member_code = generatedCode;
+    } else {
+      // Check if provided member_code already exists
+      const existing = await Member.findOne({ where: { member_code: req.body.member_code } });
+      if (existing) {
+        return res.status(409).json({ message: `Member with code '${req.body.member_code}' already exists. Please use a different code.` });
+      }
+    }
+    
     // set mem_uuid if not set
     if (!req.body.mem_uuid) req.body.mem_uuid = uuidv4();
     
@@ -95,6 +128,20 @@ exports.update = async (req,res) => {
   try {
     const found = await Member.findByPk(req.params.id);
     if (!found) return res.status(404).json({ message: 'Member not found' });
+    
+    // If member_code is being updated, check for duplicates
+    if (req.body.member_code && req.body.member_code !== found.member_code) {
+      const existing = await Member.findOne({ 
+        where: { 
+          member_code: req.body.member_code,
+          mem_id: { [Op.ne]: found.mem_id } // Exclude current member
+        } 
+      });
+      if (existing) {
+        return res.status(409).json({ message: `Member with code '${req.body.member_code}' already exists. Please use a different code.` });
+      }
+    }
+    
     await found.update(req.body);
     res.json(found);
   } catch (err) { console.error(err); res.status(400).json({ message: err.message }); }
@@ -138,9 +185,11 @@ exports.remove = async (req,res) => {
       // Delete login account if exists
       await LoginAccount.destroy({ where: { mem_id: found.mem_id } });
       
-      // Delete union executives if member is an executive
+      // Delete union executives if member is an executive (using member_code)
       const UnionExecutive = require('../models/unionExecutive.model');
-      await UnionExecutive.destroy({ where: { mem_id: found.mem_id } });
+      if (found.member_code) {
+        await UnionExecutive.destroy({ where: { member_code: found.member_code } });
+      }
       
       // Now delete the member
       await found.destroy();

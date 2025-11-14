@@ -64,7 +64,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS `union_executives` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `union_id` INT NOT NULL,
-  `mem_id` INT,
+  `member_code` VARCHAR(100),
   `position` VARCHAR(100),
   `appointed_date` DATE,
   `term_start_date` DATE,
@@ -72,8 +72,7 @@ CREATE TABLE IF NOT EXISTS `union_executives` (
   `term_length_years` INT,
   `is_current` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (`union_id`) REFERENCES `unions`(`union_id`) ON DELETE CASCADE,
-  FOREIGN KEY (`mem_id`) REFERENCES `members`(`mem_id`) ON DELETE SET NULL
+  FOREIGN KEY (`union_id`) REFERENCES `unions`(`union_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Collective Bargaining Agreements (CBAs)

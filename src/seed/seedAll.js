@@ -412,7 +412,7 @@ async function main() {
           const member = createdMembers.find(m => (m.union_id == unionId));
           executives.push({
             union_id: unionId,
-            mem_id: member ? (member.mem_id || member.id) : null,
+            member_code: member ? (member.member_code) : null,
             position: faker.helpers.arrayElement(POSITIONS),
             appointed_date: faker.date.past({ years: 3 }),
             term_start_date: faker.date.past({ years: 3 }),
@@ -428,8 +428,8 @@ async function main() {
       } else {
         for (const e of executives) {
           await sequelize.query(
-            `INSERT INTO union_executives (union_id, mem_id, position, appointed_date, term_start_date, term_end_date, term_length_years, is_current, created_at) VALUES (?,?,?,?,?,?,?,?,?)`,
-            { replacements: [e.union_id, e.mem_id, e.position, e.appointed_date, e.term_start_date, e.term_end_date, e.term_length_years, e.is_current, e.created_at], transaction: t }
+            `INSERT INTO union_executives (union_id, member_code, position, appointed_date, term_start_date, term_end_date, term_length_years, is_current, created_at) VALUES (?,?,?,?,?,?,?,?,?)`,
+            { replacements: [e.union_id, e.member_code, e.position, e.appointed_date, e.term_start_date, e.term_end_date, e.term_length_years, e.is_current, e.created_at], transaction: t }
           );
         }
       }

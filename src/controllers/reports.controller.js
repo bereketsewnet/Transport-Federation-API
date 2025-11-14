@@ -146,7 +146,7 @@ exports.executivesRemainingDays = async (req, res) => {
         ue.id,
         ue.union_id,
         u.name_en as union_name,
-        ue.mem_id,
+        ue.member_code,
         CONCAT(m.first_name, ' ', m.father_name, ' ', m.surname) as executive_name,
         m.sex,
         ue.position,
@@ -155,7 +155,7 @@ exports.executivesRemainingDays = async (req, res) => {
         DATEDIFF(ue.term_end_date, CURDATE()) as days_remaining
       FROM union_executives ue
       LEFT JOIN unions u ON ue.union_id = u.union_id
-      LEFT JOIN members m ON ue.mem_id = m.mem_id
+      LEFT JOIN members m ON ue.member_code = m.member_code
       WHERE ue.is_current = 1 AND ue.term_end_date IS NOT NULL
       ORDER BY days_remaining ASC`,
       { type: QueryTypes.SELECT }
@@ -192,7 +192,7 @@ exports.executivesExpiringBefore = async (req, res) => {
         ue.id,
         ue.union_id,
         u.name_en as union_name,
-        ue.mem_id,
+        ue.member_code,
         CONCAT(m.first_name, ' ', m.father_name, ' ', m.surname) as executive_name,
         m.sex,
         ue.position,
@@ -201,7 +201,7 @@ exports.executivesExpiringBefore = async (req, res) => {
         DATEDIFF(ue.term_end_date, CURDATE()) as days_remaining
       FROM union_executives ue
       LEFT JOIN unions u ON ue.union_id = u.union_id
-      LEFT JOIN members m ON ue.mem_id = m.mem_id
+      LEFT JOIN members m ON ue.member_code = m.member_code
       WHERE ue.is_current = 1 
         AND ue.term_end_date IS NOT NULL
         AND ue.term_end_date < :targetDate
@@ -249,7 +249,7 @@ exports.executivesByUnion = async (req, res) => {
         m.sex, 
         COUNT(*) as count 
       FROM union_executives ue
-      JOIN members m ON ue.mem_id = m.mem_id
+      JOIN members m ON ue.member_code = m.member_code
       WHERE ue.union_id = :unionId AND ue.is_current = 1
       GROUP BY m.sex`,
       { 
