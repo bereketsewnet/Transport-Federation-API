@@ -9,6 +9,15 @@ const TerminatedUnion = require('../models/terminatedUnion.model');
 const ReportCache = require('../models/reportCache.model');
 const OSHIncident = require('../models/oshIncident.model');
 const OrgLeader = require('../models/orgLeader.model');
+const Organization = require('../models/organization.model');
+
+const TERMINATED_UNION_SUBQUERY = `
+  SELECT DISTINCT tu.union_id
+  FROM terminated_unions tu
+  WHERE tu.union_id IS NOT NULL
+`;
+
+const activeUnionCondition = (column = 'union_id') => `${column} NOT IN (${TERMINATED_UNION_SUBQUERY})`;
 
 /**
  * COMPREHENSIVE REPORTS CONTROLLER
@@ -33,6 +42,7 @@ exports.membersSummary = async (req, res) => {
         COUNT(*) as count 
       FROM members 
       WHERE is_active = 1 
+        AND ${activeUnionCondition('union_id')}
       GROUP BY sex`,
       { type: QueryTypes.SELECT }
     );
@@ -47,7 +57,9 @@ exports.membersSummary = async (req, res) => {
         sex,
         COUNT(*) AS count 
       FROM members 
-      WHERE is_active = 1 AND registry_date IS NOT NULL
+      WHERE is_active = 1 
+        AND registry_date IS NOT NULL
+        AND ${activeUnionCondition('union_id')}
       GROUP BY YEAR(registry_date), sex 
       ORDER BY year ASC`,
       { type: QueryTypes.SELECT }
@@ -89,8 +101,16 @@ exports.membersSummary = async (req, res) => {
  */
 exports.unionsSummary = async (req, res) => {
   try {
-    // Total count
-    const total = await Union.count();
+    // Total count (exclude terminated unions)
+    const totalResult = await sequelize.query(
+      `SELECT COUNT(*) as count 
+       FROM unions u
+       WHERE ${activeUnionCondition('u.union_id')}`,
+      { type: QueryTypes.SELECT }
+    );
+    const total = parseInt(totalResult[0]?.count || 0, 10);
+
+    const totalOrganizations = await Organization.count();
 
     // By sector
     const bySector = await sequelize.query(
@@ -98,6 +118,7 @@ exports.unionsSummary = async (req, res) => {
         sector, 
         COUNT(*) as count 
       FROM unions 
+      WHERE ${activeUnionCondition('union_id')}
       GROUP BY sector 
       ORDER BY count DESC`,
       { type: QueryTypes.SELECT }
@@ -109,6 +130,7 @@ exports.unionsSummary = async (req, res) => {
         organization, 
         COUNT(*) as count 
       FROM unions 
+      WHERE ${activeUnionCondition('union_id')}
       GROUP BY organization 
       ORDER BY count DESC`,
       { type: QueryTypes.SELECT }
@@ -116,6 +138,7 @@ exports.unionsSummary = async (req, res) => {
 
     res.json({
       total_unions: total,
+      total_organizations: totalOrganizations,
       by_sector: bySector.map(item => ({
         sector: item.sector || 'Unknown',
         count: parseInt(item.count)
@@ -295,6 +318,7 @@ exports.membersUnder35 = async (req, res) => {
       WHERE is_active = 1 
         AND birthdate IS NOT NULL
         AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) < 35
+        AND ${activeUnionCondition('union_id')}
       GROUP BY sex`,
       { type: QueryTypes.SELECT }
     );
@@ -329,6 +353,7 @@ exports.membersAbove35 = async (req, res) => {
       WHERE is_active = 1 
         AND birthdate IS NOT NULL
         AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) >= 35
+        AND ${activeUnionCondition('union_id')}
       GROUP BY sex`,
       { type: QueryTypes.SELECT }
     );
@@ -359,12 +384,20 @@ exports.membersAbove35 = async (req, res) => {
  */
 exports.unionsCbaStatus = async (req, res) => {
   try {
-    const totalUnions = await Union.count();
+    const totalUnionsResult = await sequelize.query(
+      `SELECT COUNT(*) as count 
+       FROM unions u
+       WHERE ${activeUnionCondition('u.union_id')}`,
+      { type: QueryTypes.SELECT }
+    );
+    const totalUnions = parseInt(totalUnionsResult[0]?.count || 0, 10);
     
     // Unions with CBA
     const unionsWithCBA = await sequelize.query(
-      `SELECT COUNT(DISTINCT union_id) as count 
-       FROM cbas`,
+      `SELECT COUNT(DISTINCT c.union_id) as count 
+       FROM cbas c
+       JOIN unions u ON u.union_id = c.union_id
+       WHERE ${activeUnionCondition('u.union_id')}`,
       { type: QueryTypes.SELECT }
     );
 
@@ -399,7 +432,8 @@ exports.unionsWithoutCBA = async (req, res) => {
         u.organization,
         u.established_date
       FROM unions u
-      WHERE u.union_id NOT IN (SELECT DISTINCT union_id FROM cbas)
+      WHERE ${activeUnionCondition('u.union_id')}
+        AND u.union_id NOT IN (SELECT DISTINCT union_id FROM cbas)
       ORDER BY u.name_en ASC`,
       { type: QueryTypes.SELECT }
     );
@@ -437,6 +471,7 @@ exports.unionsCbaExpired = async (req, res) => {
       FROM unions u
       JOIN cbas c ON u.union_id = c.union_id
       WHERE c.next_end_date < CURDATE()
+        AND ${activeUnionCondition('u.union_id')}
       ORDER BY c.next_end_date ASC`,
       { type: QueryTypes.SELECT }
     );
@@ -481,6 +516,7 @@ exports.unionsCbaExpiringSoon = async (req, res) => {
       JOIN cbas c ON u.union_id = c.union_id
       WHERE c.next_end_date > CURDATE() 
         AND c.next_end_date <= DATE_ADD(CURDATE(), INTERVAL :days DAY)
+        AND ${activeUnionCondition('u.union_id')}
       ORDER BY c.next_end_date ASC`,
       { 
         replacements: { days: days },
@@ -525,6 +561,7 @@ exports.unionsCbaOngoing = async (req, res) => {
       FROM unions u
       JOIN cbas c ON u.union_id = c.union_id
       WHERE c.next_end_date > CURDATE()
+        AND ${activeUnionCondition('u.union_id')}
       ORDER BY c.next_end_date ASC`,
       { type: QueryTypes.SELECT }
     );
@@ -552,15 +589,18 @@ exports.unionsCbaOngoing = async (req, res) => {
  */
 exports.unionsGeneralAssemblyStatus = async (req, res) => {
   try {
-    const totalUnions = await Union.count();
-    
-    const withAssembly = await Union.count({
-      where: {
-        general_assembly_date: { [Op.ne]: null }
-      }
-    });
+    const assemblyCounts = await sequelize.query(
+      `SELECT 
+        SUM(CASE WHEN u.general_assembly_date IS NOT NULL THEN 1 ELSE 0 END) AS withAssembly,
+        SUM(CASE WHEN u.general_assembly_date IS NULL THEN 1 ELSE 0 END) AS withoutAssembly
+      FROM unions u
+      WHERE ${activeUnionCondition('u.union_id')}`,
+      { type: QueryTypes.SELECT }
+    );
 
-    const withoutAssembly = totalUnions - withAssembly;
+    const withAssembly = parseInt(assemblyCounts[0]?.withAssembly || 0, 10);
+    const withoutAssembly = parseInt(assemblyCounts[0]?.withoutAssembly || 0, 10);
+    const totalUnions = withAssembly + withoutAssembly;
 
     res.json({
       total_unions: totalUnions,
@@ -580,12 +620,14 @@ exports.unionsGeneralAssemblyStatus = async (req, res) => {
  */
 exports.unionsNoGeneralAssembly = async (req, res) => {
   try {
-    const unions = await Union.findAll({
-      where: {
-        general_assembly_date: null
-      },
-      order: [['name_en', 'ASC']]
-    });
+    const unions = await sequelize.query(
+      `SELECT *
+       FROM unions
+       WHERE general_assembly_date IS NULL
+         AND ${activeUnionCondition('union_id')}
+       ORDER BY name_en ASC`,
+      { type: QueryTypes.SELECT }
+    );
 
     res.json({
       count: unions.length,
@@ -608,12 +650,14 @@ exports.unionsAssemblyOnDate = async (req, res) => {
       return res.status(400).json({ message: 'date parameter required (YYYY-MM-DD)' });
     }
 
-    const unions = await Union.findAll({
-      where: {
-        general_assembly_date: date
-      },
-      order: [['name_en', 'ASC']]
-    });
+    const unions = await sequelize.query(
+      `SELECT *
+       FROM unions
+       WHERE general_assembly_date = :targetDate
+         AND ${activeUnionCondition('union_id')}
+       ORDER BY name_en ASC`,
+      { replacements: { targetDate: date }, type: QueryTypes.SELECT }
+    );
 
     res.json({
       search_date: date,
@@ -648,6 +692,7 @@ exports.unionsAssemblyRecent = async (req, res) => {
       FROM unions
       WHERE general_assembly_date IS NOT NULL
         AND general_assembly_date >= DATE_SUB(CURDATE(), INTERVAL :months MONTH)
+        AND ${activeUnionCondition('union_id')}
       ORDER BY general_assembly_date DESC`,
       { 
         replacements: { months: months },

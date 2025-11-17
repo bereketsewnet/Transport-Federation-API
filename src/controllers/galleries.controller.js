@@ -2,6 +2,7 @@
 const Gallery = require('../models/gallery.model');
 const Photo = require('../models/photo.model');
 const { Op } = require('sequelize');
+const sequelize = require('../config/db');
 
 exports.list = async (req,res) => {
   try {
@@ -34,6 +35,20 @@ exports.update = async (req,res) => {
 };
 
 exports.remove = async (req,res) => {
-  try { if (req.query.confirm !== 'true') return res.status(400).json({ message:'To delete set ?confirm=true' }); const found = await Gallery.findByPk(req.params.id); if(!found) return res.status(404).json({ message:'Not found' }); await found.destroy(); res.json({ message:'Deleted' }); }
-  catch(err){ console.error(err); res.status(500).json({ message:'Server error' }); }
+  try {
+    if (req.query.confirm !== 'true') return res.status(400).json({ message:'To delete set ?confirm=true' });
+    const found = await Gallery.findByPk(req.params.id);
+    if(!found) return res.status(404).json({ message:'Not found' });
+
+    await sequelize.transaction(async (t) => {
+      await Photo.destroy({ where: { gallery_id: found.id }, transaction: t });
+      await found.destroy({ transaction: t });
+    });
+
+    res.json({ message:'Deleted' });
+  }
+  catch(err){
+    console.error(err);
+    res.status(500).json({ message:'Server error' });
+  }
 };

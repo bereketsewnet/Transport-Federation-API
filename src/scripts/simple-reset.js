@@ -96,6 +96,7 @@ async function resetDatabase() {
     // Seed organizations
     console.log('📋 Seeding organizations...');
     const organizations = [
+      'Default Organization (only Admin)',
       'Ethiopian Airlines Group',
       'Ethiopian Maritime Transport and Logistics',
       'Addis Ababa City Bus Service Enterprise',
