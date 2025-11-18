@@ -34,8 +34,8 @@ async function seedAdmin() {
     // Security question answers (for password recovery)
     // Default answers for admin (can be changed after first login)
     const answer1Hash = await bcrypt.hash('addis ababa', 12);
-    const answer2Hash = await bcrypt.hash('smith', 12);
-    const answer3Hash = await bcrypt.hash('fluffy', 12);
+    const answer2Hash = await bcrypt.hash('admin mother name', 12);
+    const answer3Hash = await bcrypt.hash('admin first pet name', 12);
 
     // Begin transaction
     const t = await sequelize.transaction();
@@ -151,8 +151,8 @@ async function seedAdmin() {
       
       console.log('🔐 Security Questions (Pre-set for password recovery):');
       console.log('   Question 1 (ID 4): "In what city were you born?" → Answer: "addis ababa"');
-      console.log('   Question 2 (ID 2): "What is your mother\'s maiden name?" → Answer: "smith"');
-      console.log('   Question 3 (ID 3): "What was the name of your first pet?" → Answer: "fluffy"');
+      console.log('   Question 2 (ID 2): "What is your mother\'s maiden name?" → Answer: "admin mother name"');
+      console.log('   Question 3 (ID 3): "What was the name of your first pet?" → Answer: "admin first pet name"');
       console.log('\n   ⚠️  Note: You can change these security questions after logging in.\n');
       
       console.log('✅ Admin account is ready for production use.\n');
