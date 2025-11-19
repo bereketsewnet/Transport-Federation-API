@@ -4,7 +4,7 @@ const AboutContent = require('../models/aboutContent.model');
 const Executive = require('../models/executive.model');
 const ContactInfo = require('../models/contactInfo.model');
 const sequelize = require('../config/db');
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
 
@@ -174,21 +174,52 @@ exports.uploadHeroImage = async (req, res) => {
     // Update home content with new image
     let homeContent = await HomeContent.findOne();
     if (!homeContent) {
-      homeContent = await HomeContent.create({ hero_image: filename });
+      homeContent = await HomeContent.create({ heroImage: filename });
     } else {
       // Delete old image if exists
-      if (homeContent.hero_image) {
-        const oldFilePath = path.join(__dirname, '../../uploads/cms/hero', homeContent.hero_image);
+      if (homeContent.heroImage) {
+        const oldFilePath = path.join(__dirname, '../../uploads/cms/hero', homeContent.heroImage);
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
         }
       }
-      await homeContent.update({ hero_image: filename });
+      
+      // Try Sequelize update first
+      try {
+        homeContent.set('heroImage', filename);
+        await homeContent.save();
+      } catch (seqError) {
+        // Fallback to raw SQL update
+        await sequelize.query(
+          'UPDATE home_content SET hero_image = :filename, updated_at = NOW() WHERE id = :id',
+          {
+            replacements: { filename: filename, id: homeContent.id },
+            type: QueryTypes.UPDATE
+          }
+        );
+      }
+    }
+    
+    // Reload to get fresh data
+    await homeContent.reload();
+    
+    // Verify the update worked
+    if (!homeContent.heroImage) {
+      // Try one more time with raw SQL
+      await sequelize.query(
+        'UPDATE home_content SET hero_image = :filename WHERE id = :id',
+        {
+          replacements: { filename: filename, id: homeContent.id },
+          type: QueryTypes.UPDATE
+        }
+      );
+      await homeContent.reload();
     }
     
     res.json({
       message: 'Hero image uploaded successfully',
-      imageUrl: `/uploads/cms/hero/${filename}`
+      imageUrl: `/uploads/cms/hero/${filename}`,
+      heroImage: homeContent.heroImage
     });
   } catch (error) {
     // Delete uploaded file if database update fails
