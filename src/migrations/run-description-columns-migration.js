@@ -1,17 +1,24 @@
-// Add description_en and description_am columns to about_content table
-const sequelize = require('./src/config/db');
+// src/migrations/run-description-columns-migration.js
+// Run this script to add description_en and description_am columns to about_content table
 
-async function addDescriptionColumns() {
+const sequelize = require('../config/db');
+require('dotenv').config();
+
+async function runMigration() {
   try {
-    console.log('🚀 Adding description columns to about_content table...\n');
+    console.log('Connecting to database...');
+    await sequelize.authenticate();
+    console.log('✅ Connected successfully');
+
+    console.log('\n🚀 Adding description columns to about_content table...\n');
     
     // Check if columns already exist
     const [results] = await sequelize.query(`
       SELECT COLUMN_NAME 
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_SCHEMA = DATABASE() 
-      AND TABLE_NAME = 'about_content' 
-      AND COLUMN_NAME IN ('description_en', 'description_am')
+        AND TABLE_NAME = 'about_content' 
+        AND COLUMN_NAME IN ('description_en', 'description_am')
     `);
     
     const hasDescriptionEn = results.find(r => r.COLUMN_NAME === 'description_en');
@@ -19,7 +26,8 @@ async function addDescriptionColumns() {
     
     if (hasDescriptionEn && hasDescriptionAm) {
       console.log('✅ Columns description_en and description_am already exist');
-      return;
+      await sequelize.close();
+      process.exit(0);
     }
     
     // Add description_en if it doesn't exist (after vision_am)
@@ -52,6 +60,7 @@ async function addDescriptionColumns() {
       console.log('⚠️  Columns already exist (this is okay)');
     } else {
       console.error('❌ Failed to add columns:', error.message);
+      console.error(error);
       throw error;
     }
   } finally {
@@ -59,7 +68,7 @@ async function addDescriptionColumns() {
   }
 }
 
-addDescriptionColumns()
+runMigration()
   .then(() => {
     console.log('\n✅ Migration completed successfully');
     process.exit(0);
