@@ -74,4 +74,12 @@ router.get('/osh-regulatory-reports', auth, requireRole('admin'), ctrl.oshRegula
 router.get('/osh-monthly-trends', auth, requireRole('admin'), ctrl.oshMonthlyTrends);
 router.get('/osh-root-causes', auth, requireRole('admin'), ctrl.oshRootCauses);
 
+// ==============================================
+// DISCIPLINE REPORTS
+// ==============================================
+router.get('/disciplines-active-judiciary', auth, requireRole('admin'), ctrl.disciplinesActiveJudiciary);
+router.get('/disciplines-by-case', auth, requireRole('admin'), ctrl.disciplinesByCase);
+router.get('/disciplines-judiciary-verdicts', auth, requireRole('admin'), ctrl.disciplinesJudiciaryVerdicts);
+router.get('/disciplines-list', auth, requireRole('admin'), ctrl.disciplinesList);
+
 module.exports = router;

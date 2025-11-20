@@ -16,7 +16,7 @@ async function resetDatabase() {
       'osh_incidents', 'reports_cache', 'photos', 'galleries', 'news',
       'contacts', 'visitors', 'archives', 'organization_leaders',
       'login_accounts', 'terminated_unions', 'cbas', 'union_executives',
-      'members', 'unions', 'organizations', 'sectors', 'executives', 'contact_info',
+      'disciplines', 'members', 'unions', 'organizations', 'sectors', 'executives', 'contact_info',
       'about_content', 'home_content', 'documents'
     ];
 
@@ -40,6 +40,8 @@ async function resetDatabase() {
     await sequelize.query(`CREATE TABLE union_executives (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT NOT NULL, member_code VARCHAR(100), position VARCHAR(100), appointed_date DATE, term_start_date DATE, term_end_date DATE, term_length_years INT, is_current TINYINT(1) DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id) ON DELETE CASCADE)`);
     
     await sequelize.query(`CREATE TABLE cbas (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT NOT NULL, duration_years INT, status VARCHAR(50), registration_date DATE, next_end_date DATE, renewed_date DATE, round VARCHAR(20), notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id))`);
+    
+    await sequelize.query(`CREATE TABLE disciplines (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT NOT NULL, mem_id INT NOT NULL, discipline_case ENUM('Warning', 'Salary Penalty', 'Work Suspension', 'Termination') NOT NULL, reason_of_discipline TEXT NOT NULL, date_of_action_taken DATE NOT NULL, judiciary_intermediate TINYINT(1) DEFAULT 0, resolution_method ENUM('Social Dialog', 'Judiciary Body'), verdict_for ENUM('Worker', 'Employer'), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id) ON DELETE CASCADE, FOREIGN KEY (mem_id) REFERENCES members(mem_id) ON DELETE CASCADE)`);
     
     await sequelize.query(`CREATE TABLE terminated_unions (id INT AUTO_INCREMENT PRIMARY KEY, union_id INT, name_en TEXT, name_am TEXT, sector VARCHAR(50), organization TEXT, established_date DATE, terms_of_election INT, general_assembly_date DATE, strategic_plan_in_place TINYINT(1), external_audit_date DATE, region VARCHAR(100), zone VARCHAR(100), city VARCHAR(100), sub_city VARCHAR(100), woreda VARCHAR(100), location_area VARCHAR(255), terminated_date DATE, termination_reason TEXT, archived_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (union_id) REFERENCES unions(union_id))`);
     

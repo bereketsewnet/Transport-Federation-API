@@ -10,6 +10,7 @@ const ReportCache = require('../models/reportCache.model');
 const OSHIncident = require('../models/oshIncident.model');
 const OrgLeader = require('../models/orgLeader.model');
 const Organization = require('../models/organization.model');
+const Discipline = require('../models/discipline.model');
 
 const TERMINATED_UNION_SUBQUERY = `
   SELECT DISTINCT tu.union_id
@@ -1316,6 +1317,255 @@ exports.oshRootCauses = async (req, res) => {
     });
   } catch (err) {
     console.error('OSH root causes error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ==============================================
+// DISCIPLINE REPORTS
+// ==============================================
+
+/**
+ * Discipline Report 1: Active Judiciary Cases
+ * GET /api/reports/disciplines-active-judiciary
+ */
+exports.disciplinesActiveJudiciary = async (req, res) => {
+  try {
+    const { union_id } = req.query;
+    
+    let where = {
+      judiciary_intermediate: true,
+      resolution_method: 'Judiciary Body',
+      verdict_for: { [Op.is]: null } // No verdict yet means case is still active
+    };
+    
+    if (union_id) where.union_id = union_id;
+    
+    const activeCases = await Discipline.findAll({
+      where,
+      include: [
+        { model: Union, as: 'union', attributes: ['union_id', 'union_code', 'name_en', 'name_am'] },
+        { model: Member, as: 'member', attributes: ['mem_id', 'member_code', 'first_name', 'father_name', 'surname'] }
+      ],
+      order: [['date_of_action_taken', 'DESC']]
+    });
+    
+    res.json({
+      count: activeCases.length,
+      data: activeCases
+    });
+  } catch (err) {
+    console.error('Disciplines active judiciary error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Discipline Report 2: Discipline Case Taken (breakdown by case) - Pie chart and table
+ * GET /api/reports/disciplines-by-case
+ */
+exports.disciplinesByCase = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    let where = {};
+    if (union_id) where.union_id = union_id;
+    
+    if (from_date || to_date) {
+      where.date_of_action_taken = {};
+      if (from_date) where.date_of_action_taken[Op.gte] = from_date;
+      if (to_date) where.date_of_action_taken[Op.lte] = to_date;
+    }
+    
+    // Count by discipline case
+    const byCase = await sequelize.query(
+      `SELECT 
+        discipline_case, 
+        COUNT(*) as count 
+      FROM disciplines 
+      ${union_id ? 'WHERE union_id = :unionId' : ''}
+      ${from_date || to_date ? (union_id ? 'AND' : 'WHERE') + ' date_of_action_taken BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY discipline_case 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+    
+    const total = byCase.reduce((sum, item) => sum + parseInt(item.count), 0);
+    
+    // Get detailed list
+    const detailedList = await Discipline.findAll({
+      where,
+      include: [
+        { model: Union, as: 'union', attributes: ['union_id', 'union_code', 'name_en', 'name_am'] },
+        { model: Member, as: 'member', attributes: ['mem_id', 'member_code', 'first_name', 'father_name', 'surname'] }
+      ],
+      order: [['date_of_action_taken', 'DESC']]
+    });
+    
+    res.json({
+      summary: {
+        by_case: byCase.map(item => ({
+          case: item.discipline_case,
+          count: parseInt(item.count),
+          percentage: total > 0 ? ((parseInt(item.count) / total) * 100).toFixed(2) : 0
+        })),
+        total: total
+      },
+      data: detailedList
+    });
+  } catch (err) {
+    console.error('Disciplines by case error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Discipline Report 3: Total number of resolution taken by Judiciary Body for Verdicts - Pie chart and table including percent
+ * GET /api/reports/disciplines-judiciary-verdicts
+ */
+exports.disciplinesJudiciaryVerdicts = async (req, res) => {
+  try {
+    const { union_id, from_date, to_date } = req.query;
+    
+    let where = {
+      resolution_method: 'Judiciary Body',
+      verdict_for: { [Op.ne]: null }
+    };
+    
+    if (union_id) where.union_id = union_id;
+    
+    if (from_date || to_date) {
+      where.date_of_action_taken = {};
+      if (from_date) where.date_of_action_taken[Op.gte] = from_date;
+      if (to_date) where.date_of_action_taken[Op.lte] = to_date;
+    }
+    
+    // Count by verdict
+    const byVerdict = await sequelize.query(
+      `SELECT 
+        verdict_for, 
+        COUNT(*) as count 
+      FROM disciplines 
+      WHERE resolution_method = 'Judiciary Body' 
+        AND verdict_for IS NOT NULL
+      ${union_id ? 'AND union_id = :unionId' : ''}
+      ${from_date || to_date ? 'AND date_of_action_taken BETWEEN :fromDate AND :toDate' : ''}
+      GROUP BY verdict_for 
+      ORDER BY count DESC`,
+      { 
+        replacements: { 
+          unionId: union_id,
+          fromDate: from_date || '1900-01-01',
+          toDate: to_date || '2100-12-31'
+        },
+        type: QueryTypes.SELECT 
+      }
+    );
+    
+    const total = byVerdict.reduce((sum, item) => sum + parseInt(item.count), 0);
+    
+    // Get detailed list
+    const detailedList = await Discipline.findAll({
+      where,
+      include: [
+        { model: Union, as: 'union', attributes: ['union_id', 'union_code', 'name_en', 'name_am'] },
+        { model: Member, as: 'member', attributes: ['mem_id', 'member_code', 'first_name', 'father_name', 'surname'] }
+      ],
+      order: [['date_of_action_taken', 'DESC']]
+    });
+    
+    res.json({
+      summary: {
+        by_verdict: byVerdict.map(item => ({
+          verdict_for: item.verdict_for,
+          count: parseInt(item.count),
+          percentage: total > 0 ? ((parseInt(item.count) / total) * 100).toFixed(2) : 0
+        })),
+        total: total
+      },
+      data: detailedList
+    });
+  } catch (err) {
+    console.error('Disciplines judiciary verdicts error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * Discipline Report 4: List of Discipline in the form of table with search and filter option
+ * GET /api/reports/disciplines-list
+ */
+exports.disciplinesList = async (req, res) => {
+  try {
+    const {
+      q,
+      union_id,
+      mem_id,
+      discipline_case,
+      judiciary_intermediate,
+      resolution_method,
+      verdict_for,
+      from_date,
+      to_date,
+      page = 1,
+      per_page = 20
+    } = req.query;
+    
+    const limit = Math.max(1, parseInt(per_page, 10));
+    const currentPage = Math.max(1, parseInt(page, 10));
+    const offset = (currentPage - 1) * limit;
+    
+    let where = {};
+    
+    if (q) {
+      where[Op.or] = [
+        { reason_of_discipline: { [Op.like]: `%${q}%` } }
+      ];
+    }
+    
+    if (union_id) where.union_id = union_id;
+    if (mem_id) where.mem_id = mem_id;
+    if (discipline_case) where.discipline_case = discipline_case;
+    if (typeof judiciary_intermediate !== 'undefined') {
+      where.judiciary_intermediate = judiciary_intermediate === 'true' ? 1 : 0;
+    }
+    if (resolution_method) where.resolution_method = resolution_method;
+    if (verdict_for) where.verdict_for = verdict_for;
+    
+    if (from_date || to_date) {
+      where.date_of_action_taken = {};
+      if (from_date) where.date_of_action_taken[Op.gte] = from_date;
+      if (to_date) where.date_of_action_taken[Op.lte] = to_date;
+    }
+    
+    const { rows, count } = await Discipline.findAndCountAll({
+      where,
+      include: [
+        { model: Union, as: 'union', attributes: ['union_id', 'union_code', 'name_en', 'name_am'] },
+        { model: Member, as: 'member', attributes: ['mem_id', 'member_code', 'first_name', 'father_name', 'surname'] }
+      ],
+      limit,
+      offset,
+      order: [['date_of_action_taken', 'DESC']]
+    });
+    
+    res.json({
+      data: rows,
+      meta: {
+        total: count,
+        page: currentPage,
+        per_page: limit
+      }
+    });
+  } catch (err) {
+    console.error('Disciplines list report error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

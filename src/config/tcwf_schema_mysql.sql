@@ -249,10 +249,29 @@ CREATE TABLE IF NOT EXISTS `reports_cache` (
   `generated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Disciplines table
+CREATE TABLE IF NOT EXISTS `disciplines` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `union_id` INT NOT NULL,
+  `mem_id` INT NOT NULL,
+  `discipline_case` ENUM('Warning', 'Salary Penalty', 'Work Suspension', 'Termination') NOT NULL,
+  `reason_of_discipline` TEXT NOT NULL,
+  `date_of_action_taken` DATE NOT NULL,
+  `judiciary_intermediate` TINYINT(1) NOT NULL DEFAULT 0,
+  `resolution_method` ENUM('Social Dialog', 'Judiciary Body'),
+  `verdict_for` ENUM('Worker', 'Employer'),
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`union_id`) REFERENCES `unions`(`union_id`) ON DELETE CASCADE,
+  FOREIGN KEY (`mem_id`) REFERENCES `members`(`mem_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Indexes
 CREATE INDEX idx_members_union ON `members`(`union_id`);
 CREATE INDEX idx_executives_union ON `union_executives`(`union_id`);
 CREATE INDEX idx_cbas_union ON `cbas`(`union_id`);
 CREATE INDEX idx_login_mem ON `login_accounts`(`mem_id`);
+CREATE INDEX idx_disciplines_union ON `disciplines`(`union_id`);
+CREATE INDEX idx_disciplines_member ON `disciplines`(`mem_id`);
 
 SET FOREIGN_KEY_CHECKS = 1;

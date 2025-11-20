@@ -32,6 +32,7 @@ app.use('/api/terminated-unions', require('./routes/terminatedUnions.routes'));
 app.use('/api/login-accounts', require('./routes/loginAccounts.routes'));
 app.use('/api/org-leaders', require('./routes/orgLeaders.routes'));
 app.use('/api/archives', require('./routes/archives.routes'));
+app.use('/api/disciplines', require('./routes/disciplines.routes'));
 app.use('/api/documents', require('./routes/documents.routes'));
 app.use('/api/visitors', require('./routes/visitors.routes'));
 app.use('/api/contacts', require('./routes/contacts.routes'));
